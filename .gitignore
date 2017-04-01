@@ -1,0 +1,13 @@
+cache/*
+*~
+*.pyc
+*__pycache__
+*.egg-info/*
+*.egg
+build/*
+*.h5
+*.root
+*.pdf
+*.pkl
+*.out
+*.txt
