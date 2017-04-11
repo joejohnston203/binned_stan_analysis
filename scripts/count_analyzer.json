@@ -1,0 +1,143 @@
+{
+   "morpho":
+   {
+     "do_preprocessing": True,
+     "do_stan": True,
+     "do_postprocessing": False,
+     "do_plots": False
+   },
+"preprocessing":
+   {
+    "which_preprocessing":[
+      {
+        "method_name": "data_generator_ricochet",
+        "module_name": "data_generator_ricochet",
+        "which_spectrum": ["time"],
+        "Poisson_redistribution": True,
+        "Gaussian_redistribution": True,
+        "Gauss_signal_pct_variation": 5,
+        "generate_input_time_shape_files" : True,
+        "input_file_times" : "./Ricochet/data/times.csv",
+        "input_file_rate_shape" : "./Ricochet/data/rates.csv",
+        "nBinHistoTime": 30,
+        "startTime": 0,
+        "endTime": 365,
+        "full_power_time_frac":0.6,
+        "signal_rate": 5.0,
+        "background_rate": 14,
+        "nBackgrounds": 1,
+        "background_fracs":[1],
+        "background_halflives_days":[1000000000],
+        "output_file_rate_shape_binned": "./Ricochet/results/count_generator_reduced.root",
+        "output_file_rate_shape_binned_format": "root",
+        "output_tree_rate_shape_binned": "rate_shape",
+        "output_file_fake_data" : "./Ricochet/results/count_generator_reduced_fake.root",
+        "output_file_fake_data_format": "root",
+        "output_tree_fake_data": "counts",
+        "additional_file_name" : "./Ricochet/results/count_additionalData.out",
+      }
+    ]
+},
+    "stan": {
+        
+        "name": "count_analyzer",
+        
+        "model":   {
+            "file": "./Ricochet/models/count_analyzer.stan",
+            "function_file": [
+                              {"name" : "ricochet", "file" : "../functions/ricochet.functions"}
+                              ],
+            "cache": "./Ricochet/cache"
+        },
+        
+        "data": {
+            "type": "mc",
+            "files": [
+                      {
+                      "name": "./Ricochet/results/count_additionalData.out",
+                      "format":"R" 
+                      },
+                      {
+                      "name" : "./Ricochet/results/count_generator_reduced.root",
+                      "format" : "root",
+                      "tree" : "rate_shape",
+                      "branches" : [
+                                      {"name" : "time", "stan_alias" : "time"},
+                                      {"name" : "time_signal_binned", "stan_alias" : "time_signal_binned"}
+                                    ]
+                      },
+                      {
+                      "name" : "./Ricochet/results/count_generator_reduced_fake.root",
+                      "format" : "root",
+                      "tree" : "counts",
+                      "branches" : [
+                                     {"name" : "x_axis_data", "stan_alias" : "time_data"},
+                                     {"name" : "n_counts_data", "stan_alias" : "n_counts_data", "data_format" : "integer"},
+                                    ]
+                      }
+
+                      ],
+            "parameters": [
+                           {
+                           "startTime": 0,
+                           "endTime": 365,
+                           "signal_lb":0,
+                           "signal_ub":100,
+                           "background_lb":0,
+                           "background_ub":100,
+                           "nBackgrounds":1,
+                           "decay_param_lb":0,
+                           "decay_param_ub":1
+                           }
+                           ]
+        },
+        
+        "run": {
+            "algorithm": "NUTS",
+            "iter": 24000,
+            "warmup" : 20000,
+            "chain": 6},
+        
+        
+        "sample": "./Ricochet/results/ricochet_counts_analyzer.out",
+        
+        "output":
+        {
+            "name" : "./Ricochet/results/ricochet_counts_analyzer",
+            "format": "root",
+            "tree" : "analysis_parameters",
+            "save_cache_name": "./Ricochet/results/cache_name_file.txt", 
+            "fit": "./Ricochet/results/analysis_fit.pkl", 
+            "branches": [
+                {"variable": "signal_rate","root_alias": "signal_rate"},
+                { "variable": "background_rate","root_alias": "background_rate"},
+                { "variable": "lp__","root_alias": "lp__"},
+                      ]
+        }
+        
+    },
+
+"postprocessing":
+  {
+    "which_pp":[
+      {
+      }
+   ]
+   },
+
+"plot":
+    {
+      "which_plot":[
+        {
+        "method_name": "rate_params",
+        "module_name": "rate_params",
+        "read_cache_name": "./Ricochet/results/cache_name_file.txt",
+        "input_fit_name": "./Ricochet/results/analysis_fit.pkl",
+        "output_path": "./Ricochet/results/",
+        "output_format": "pdf",
+        "plotting_options": ["contours"],
+        "data": {"alpha":"alpha","background_rate_mean":"background_rate_mean"}
+        }
+    ]
+    }
+}

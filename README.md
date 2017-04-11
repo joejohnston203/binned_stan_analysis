@@ -14,15 +14,17 @@ Directory Structure
   scripts
 
     The .yaml configuration files for stan models should be stored here. The
-    
     .yaml file will also include parameters that will be used for preprocessing,
-    such as generating fake data.
+    such as generating fake data, under the header 'preprocessing:'.
+
+    See rate_shape_analyzer.yaml for an example of how .yaml files should be
+    written.
 
   ricfunctions
 
     Functions specific to ricochet, such as spectral shapes and time dependence
     shapes. The .yaml file should specifiy the files where the relevant
-    funcitons are located.
+    functions are located.
 
     When adding signals or backgrounds to the model, you should only need to
     edit the .yaml config file and the functions in ricfunctions that the .yaml
@@ -30,14 +32,12 @@ Directory Structure
     
   preprocessing
   
-    shapegenerator.py: Generates the shape of signals and backgrounds using
-    inputs from a .yaml file, then stores the shapes and other information
-    about the signals and backgrounds in the data directory. Informational
+    shape_fakedata_generator.py: Can generates the shape of signals and
+    backgrounds using inputs from a .yaml file, then stores the shapes of
+    the signals and backgrounds in the data directory. Informational
     outputs, such as plots of each background shape, can optionally be
-    generated and stored.
-
-    datageneartor.py: Uses the generated shapes and inputs from a .yaml config
-    file to generate fake data.
+    generated and stored. The generated shapes and inputs from a .yaml config
+    file can then be used to generate fake data.
 
   data
 
