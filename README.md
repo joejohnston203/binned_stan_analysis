@@ -1,5 +1,5 @@
 # ricochet_sensitivity
-Stan/morphomodel to analyze the sensitivity of Ricochet at the Double Chooz Reactor
+Stan/morpho model to analyze the sensitivity of any experiment where the data can be binned. Specific scripts analyze the sensitivity of Ricochet at the Double Chooz Reactor.
 
 Requirements
 ======
@@ -17,12 +17,12 @@ Directory Structure
     .yaml file will also include parameters that will be used for preprocessing,
     such as generating fake data, under the header 'preprocessing:'.
 
-    See rate_shape_analyzer.yaml for an example of how .yaml files should be
+    See ricochet_rate_shape_analyzer.yaml for an example of how .yaml files should be
     written.
 
-  ricfunctions
+  functions
 
-    Functions specific to ricochet, such as spectral shapes and time dependence
+    Functions specific to a given experiment, such as spectral shapes and time dependence
     shapes. The .yaml file should specifiy the files where the relevant
     functions are located.
 
@@ -48,10 +48,11 @@ Directory Structure
 
   models
 
-    Stan models (.stan files) are stored here. binned_data_analysis.stan is a
-    very general stan model that analyzes binned data. The binned data can
-    result from multiple signals and backgrounds, and can depend on multiple
-    variables (such as recoil energy and time).
+    Stan models (.stan files) are stored here. binned_data_analysis_2D.stan
+    and binned_data_analysis_1D.stan are a very general stan models that
+    analyze binned data. The binned data can result from multiple signals
+    and backgrounds, and can depend on multiple variables (such as recoil
+    energy and time).
 
   results
 
