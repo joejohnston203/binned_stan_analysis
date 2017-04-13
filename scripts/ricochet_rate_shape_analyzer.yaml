@@ -25,9 +25,9 @@ preprocessing:
       lower_bound: 100
       upper_bound: 1000
       renormalization: "integral"
-  additional_stan_input_file: "data/additional_data.out"
+  additional_stan_input_file: "data/additional_stan_info.out"
     # Required if generate_shapes=True: File for storing additional info for stan
-    #                             when generating shapes, such as the number of bins
+    #       when generating shapes, such as the number of bins and variable bounds
   # Parameters for generating signal shapes
   signal_shape_output_file: "data/signal_shapes.root"
   signal_shape_output_type: "root"
@@ -112,8 +112,9 @@ preprocessing:
     fake_data_output_file: "data/fake_data.out"
     fake_data_output_tree: "fake_data"
 #    fake_data_output_type: "R"
+      # 2D data can only be stored as an R file
   optional_output_settings:
-#    print_debug_statements: True
+    print_debug_statements: True
       # Optional (Default=False): Whether statements about the progress should be printed to the terminal
     store_info_text: True
       # Optional (Default=False): Whether shape_info.txt and fake_data_info.txt should be stored
@@ -122,101 +123,84 @@ preprocessing:
     info_output_directory: 'data/diagnostics/'
       # Required if store_info_text or store_info_plots are True: Directory to store a record of shape and
       # fake data generation.
-
-# ALL OF THE FOLLOWING NEEDS TO BE EDITED WHEN I IMPLEMENT THE MODEL
 morpho:
-  do_stan: False
+  do_stan: True
   do_postprocessing: False
   do_plots: False
 stan:
   # Name of the model
-  name: count_analyzer,
+  name: "binned_data_analysis_2D"
   # Model, associated functions, cache folder
   model:
-    file: "./Ricochet/models/count_analyzer.stan"
-    function_file:
-# I DON'T KNOW IF THIS FORMAT IS RIGHT FOR THE FUNCTION FILE
-      - name: "ricochet"
-        file: "../functions/ricochet.functions"
-  cache: "./Ricochet/cache"
+    file: "./models/binned_data_analysis_2D.stan"
+    function_file: None
+    cache: "./cache"
+  # Input data
   data:
     files:
-      - name: "./Ricochet/results/count_additionalData.out"
-        format: "R" 
-      - name: "./Ricochet/results/count_generator_reduced.root"
+#      - name: "./data/additional_stan_info.out"
+#        format: "R"
+      # A bug in morpho currently only allows one R-format file, so shape_fake_data_generator.py
+      # currently copies the contents of additional_stan_input_file to fake_data_output_file
+      # if both are stored as "R" files
+      - name: "./data/fake_data.out"
+        format: "R"
+      - name: "./data/signal_shapes.root"
         format: "root"
-        tree: "rate_shape"
+        tree: "cns_time"
         branches:
           - name: "time"
-            stan_alias: "time"
-          - name: "time_signal_binned"
-            stan_alias: "time_signal_binned"
-      - name: "./Ricochet/results/count_generator_reduced_fake.root"
+            stan_alias: "x_sig_var_1"
+          - name: "cns"
+            stan_alias: "x_sig_1"
+      - name: "./data/signal_shapes.root"
         format: "root"
-        tree: "counts"
+        tree: "cns_Er"
         branches:
-          - name: "x_axis_data"
-            stan_alias: "time_data"
-#            "parameters": [
-#                           {
-#                           "startTime": 0,
-#                           "endTime": 365,
-#                           "signal_lb":0,
-#                           "signal_ub":100,
-#                           "background_lb":0,
-#                           "background_ub":100,
-#                           "nBackgrounds":1,
-#                           "decay_param_lb":0,
-#                           "decay_param_ub":1
-#                           }
-#                           ]
-#        },
-#        
-#        "run": {
-#            "algorithm": "NUTS",
-#            "iter": 24000,
-#            "warmup" : 20000,
-#            "chain": 6},
-#        
-#        
-#        "sample": "./Ricochet/results/ricochet_counts_analyzer.out",
-#        
-#        "output":
-#        {
-#            "name" : "./Ricochet/results/ricochet_counts_analyzer",
-#            "format": "root",
-#            "tree" : "analysis_parameters",
-#            "save_cache_name": "./Ricochet/results/cache_name_file.txt", 
-#            "fit": "./Ricochet/results/analysis_fit.pkl", 
-#            "branches": [
-#                {"variable": "signal_rate","root_alias": "signal_rate"},                { "variable": "background_rate","root_alias": "background_rate"},
-#                { "variable": "lp__","root_alias": "lp__"},
-#                      ]
-#        }
-#        
-#    },
-#
-#"postprocessing":
-#  {
-#    "which_pp":[
-#      {
-#      }
-#   ]
-#   },
-#
-#"plot":
-#    {
-#      "which_plot":[
-#        {
-#        "method_name": "rate_params",
-#        "module_name": "rate_params",
-#        "read_cache_name": "./Ricochet/results/cache_name_file.txt",
-#        "input_fit_name": "./Ricochet/results/analysis_fit.pkl",
-#        "output_path": "./Ricochet/results/",
-#        "output_format": "pdf",
-#        "plotting_options": ["contours"],
-#        "data": {"alpha":"alpha","background_rate_mean":"background_rate_mean"}
-#        }
-#    ]
-#    }
-#}
+          - name: "Er"
+            stan_alias: "y_sig_var_1"
+          - name: "cns"
+            stan_alias: "y_sig_1"
+      - name: "./data/background_shapes.root"
+        format: "root"
+        tree: "neutron_time"
+        branches:
+          - name: "time"
+            stan_alias: "x_back_var_1"
+          - name: "neutrons"
+            stan_alias: "x_back_1"
+      - name: "./data/background_shapes.root"
+        format: "root"
+        tree: "neutron_Er"
+        branches:
+          - name: "Er"
+            stan_alias: "y_back_var_1"
+          - name: "neutrons"
+            stan_alias: "y_back_1"
+    parameters:
+      - startTime: 0
+        signal_lb: 0
+        signal_ub: 100
+        background_lb: 0
+        background_ub: 100
+  # Run parameters
+  run:
+    algorithm: "NUTS"
+    iter: 24000
+    warmup: 20000
+    chain: 6
+    n_jobs: 1
+#    sample: "./results/ricochet_rate_shape_analyzer.out"
+  output:
+    name: "./results/rate_shape_analyzer"
+    format: "root"
+    tree: "analysis_parameters"
+    save_cache_name: "./results/cache_name_file.txt"
+    fit: "./results/rate_shape_analysis_fit.pkl"
+    branches:
+      - variable: "signal_rate"
+        root_alias: "signal_rate"
+      - variable: "background_rate"
+        root_alias: "background_rate"
+      - variable: "signal_rate_smeared"
+        root_alias: "signal_rate_smeared"

@@ -250,6 +250,7 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
                           tree_name,curr_x_name,curr_y_name)
             curr_tree.Write()
 
+            # TODO: Implement storing debug text and plots
             # Print optional output text and plots about the current signal
             if(store_info):
                 txt_file.write("To do: Implement storing info about the shape\n")
@@ -283,11 +284,30 @@ def sum_weighted_shapes(input_root_file,shapes_dict,nBins,
     tot_shape = tot_shape/tot_weight
     return tot_shape
 # ----------------------------------------------------------------------
+# Note that I read all text from both files into memory, so this
+# method may crash for very large files
+def concatenate_files(file1_name, file2_name,output_name):
+    file1 = open(file1_name,'r')
+    file2 = open(file2_name,'r')
+    text = file1.read() + "\n" + file2.read()
+    file1.close()
+    file2.close()
+    outfile = open(output_name,'w')
+    outfile.write(text)
+    outfile.close()
+    
+# ----------------------------------------------------------------------
 # Inputs: numpy array of data, path to output file, and output type.
 #         Currently, the output type can only be "R" or "root", and
 #         for an array of dimension>=2 only "R" is supported
+#
+#         The contents of append_R_file will be appended to the end of
+#         output_file_name if output_file_type=="R". append_R_file
+#         must be an R file. This allows multiple data arrays to be
+# 	  stored in a single R file.
 def write_data_array(arr,output_file_name,output_file_type,
-                     tree_name,data_type="float"):
+                     tree_name,data_type="float",
+                     append_R_file=""):
     ndims = len(arr.shape)
     if(output_file_type=='R'):
         # Store data to an R file
@@ -298,6 +318,9 @@ def write_data_array(arr,output_file_name,output_file_type,
         else:
             print("ERROR: Invalid data_type %s- select \"float\" or \"int\"" % data_type)
         pystan.misc.stan_rdump(tempdict, output_file_name)
+        # Append the contents of append_R_file to the output_file
+        if(append_R_file != ""):
+            concatenate_files(output_file_name,append_R_file,output_file_name)
     elif(output_file_type=='root'):
         print("ERROR: Writing to root file not yet implemented")
         if(ndim>1):
@@ -319,7 +342,8 @@ def write_data_array(arr,output_file_name,output_file_type,
 #         dimensional data currently cannot be stored.
 def generate_fake_data(vars_dict,signals_dict,signals_input_file,signals_input_type,
                        backs_dict,backs_input_file,backs_input_type,
-                       fake_data_settings,optional_outputs=[]):
+                       fake_data_settings,optional_outputs=[],
+                       additional_stan_input_file=""):
     # Settings about output messages and saved information
     print_debug = read_param(optional_outputs,'print_debug_statements',False)
     store_info = read_param(optional_outputs,'store_info_text',False)
@@ -357,8 +381,14 @@ def generate_fake_data(vars_dict,signals_dict,signals_input_file,signals_input_t
     # Generate an n-dimensional array of fake data
     sig_mag = read_param(fake_data_settings,'fake_signal_magnitude','required')
     back_mag = read_param(fake_data_settings,'fake_background_magnitude','required')
+
+    ran = ROOT.TRandom3()
+    ran.SetSeed(0)
     if(gauss_redist):
-        print("Need to implement gaussian redistribution")
+        # TODO: Take this input from the yaml file
+        #       The 5% global flucutation accounts for us not knowing
+        #       the overall power
+        sig_mag = ran.Gaus(sig_mag,sig_mag*0.05)
         
     fake_data = np.empty(nBins_arr)
     ran = ROOT.TRandom3()
@@ -370,6 +400,13 @@ def generate_fake_data(vars_dict,signals_dict,signals_input_file,signals_input_t
             curr_sig_counts*=total_sig_shapes[j][index[j]]
             curr_back_counts*=total_back_shapes[j][index[j]]
         curr_fake_data = curr_sig_counts+curr_back_counts
+        if(gauss_redist):
+            # TODO: Take this input from the .yaml file
+            #       I use 15% because 15 eV is the resolution, bin
+            #       width is 100 eV. I also need to think of a better
+            #       way to address energy resolution, preferably one
+            #       that maintains the total number of events
+            curr_fake_data = ran.Gaus(curr_fake_data,0.15*curr_fake_data)
         if(poisson_redist):
             curr_fake_data = ran.Poisson(curr_fake_data)
         fake_data.itemset(index,curr_fake_data)
@@ -378,8 +415,12 @@ def generate_fake_data(vars_dict,signals_dict,signals_input_file,signals_input_t
     fake_data_output_file = read_param(fake_data_settings,'fake_data_output_file','required')
     fake_data_output_type = read_param(fake_data_settings,'fake_data_output_type','R')
     fake_data_output_tree = read_param(fake_data_settings,'fake_data_output_tree','fake_data')
+    # If fake_data_output_type=="R", this will copy the contents of the
+    # additional_stan_input file to the end of the fake_data file, so
+    # only one R file is required by the stan model
     write_data_array(fake_data,fake_data_output_file,fake_data_output_type,
-                     fake_data_output_tree,"float")    
+                     fake_data_output_tree,"int",
+                     append_R_file=additional_stan_input_file)
     return
 # ----------------------------------------------------------------------
 # Main method
@@ -416,14 +457,20 @@ if __name__== '__main__':
         additional_file = open(additional_file_name,"w")
         for ivar,var in enumerate(vars_dict):
             nbins=read_param(var,'bins','required')
+            lb = read_param(var,'lower_bound','required')
+            ub = read_param(var,'upper_bound','required')
             additional_file.write('nBins_%i <- %i\n'%(ivar,nbins))
+            additional_file.write('lb_%i <- %f\n'%(ivar,lb))
+            additional_file.write('ub_%i <- %f\n'%(ivar,ub))
+        additional_file.close()
         
     # Generate fake data
     if read_param(prep_dict,'generate_fake_data',False):
         print("Generating and storing fake data")
+        additional_file_name = read_param(prep_dict,'additional_stan_input_file','required')
         generate_fake_data(vars_dict,signal_dict,signal_output_file,signal_output_type,
                            back_dict,back_output_file,back_output_type,
                            read_param(prep_dict,'fake_data_settings','required'),
-                           opt_out_settings)
+                           opt_out_settings,additional_file_name)
 
     print("Preprocessing complete")
