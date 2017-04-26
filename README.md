@@ -109,7 +109,9 @@ Running
   Once you have created a yaml_script, the following commands run the analysis and create plots:
 
   python helper_scripts/shape_fakedata_generator.py -c $yaml_script
+  
   morpho -c $yaml_script
+  
   python ./helper_scripts/non_morpho_plots.py -c $yaml_script
 
   To run the rate only ricochet analysis, use the script ./bash_scripts/example_simple_run.sh.
