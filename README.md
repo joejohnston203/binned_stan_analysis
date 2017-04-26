@@ -35,8 +35,8 @@ Directory Structure
     binned_data_analysis_1D_1back.stan is a model that takes the inputs from
     shape_fakedata_generator.py, then runs an analysis of the generated 1-dimensional
     data assuming that it results from a single signal and a single background.
-    binned_data_analysis_2D_3back_tot_bin_var.stan is a model that analyzes
-    2-dimensional data assuming that it results from one signal and three backgrounds.
+    binned_data_analysis_2D_4back_tot_bin_var.stan is a model that analyzes
+    2-dimensional data assuming that it results from one signal and four backgrounds.
     This model also allows the total number of counts in each bin to vary by some amount
     (if such variation was turned on when preprocessing was done). (The tot_bin_var
     version of this model should only be used if the model actually does allow the
@@ -131,3 +131,6 @@ Running
   run many times with a single chain. This is so you can check the output plots to
   discard any chains that did not properly converge, then average the results of the
   remaining chains to get final results.
+
+  The results that went into the paper can be accessed at:
+  https://www.dropbox.com/sh/owa9y6qtmdcwenk/AABiqeQbo0WBhvnxuDFqY1VEa?dl=0

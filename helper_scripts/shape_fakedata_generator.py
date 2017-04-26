@@ -200,13 +200,21 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
                     y_vals = y_fcn(x_vals)
             elif fcn_type == "data_files":
                 data_file_type = read_param(dim_p,'data_file_type','csv')
-                if(data_file_type!='csv' and data_file_type!='.csv'):
-                    print("WARNING: data_file_type currently must be \"csv\"")
-                    print("         data_file_type==\"%s\" invalid. Assuming data_file_type==\"csv\"." % data_file_type)
-                x_path = read_param(dim_p,'x_data_location','required')
-                y_path = read_param(dim_p,'y_data_location','required')
-                x_vals = np.genfromtxt(x_path,delimiter=',')
-                y_vals = np.genfromtxt(y_path,delimiter=',')
+                if(data_file_type=='csv'):
+                    x_path = read_param(dim_p,'x_data_location','required')
+                    x_vals = np.genfromtxt(x_path,delimiter=',')
+                    y_path = read_param(dim_p,'y_data_location','required')
+                    y_vals = np.genfromtxt(y_path,delimiter=',')
+                elif(data_file_type=='columns'):
+                    path = read_param(dim_p,'data_location','required')
+                    delim = read_param(dim_p,'delimiter','\t')
+                    data = np.loadtxt(path,delimiter=delim)
+                    x_vals = data[:,0]
+                    y_vals = data[:,1]
+                else:
+                    print("WARNING: data_file_type currently must be \"csv\" or \"columns\"")
+                    print("         data_file_type==\"%s\" invalid. Exiting." % data_file_type)
+                    return
             elif fcn_type == "stan_fcn":
                 x_vals = [1.0]
                 y_vals = [1.0]

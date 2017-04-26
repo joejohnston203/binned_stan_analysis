@@ -4,20 +4,21 @@
 # will be copied before modifying, so the original script will be unchanged.
 # The copy will be deleted when this script is done.
 yaml_script=./scripts/example_ricochet_rate_analyzer.yaml
-yaml_script_copy=./scripts/temp_80pctOn_2back_ricochet_rate_analyzer.yaml
+yaml_script_copy=./scripts/temp_ricochet_rate_analyzer_60pctOn_1back_50pctTotBin.yaml
 
 # Replace all instances of init_descriptor with new_descriptor in
 # the .yaml script
 init_descriptor='ric_rate_example'
-new_descriptor='ric_rate_80pctOn_2back'
+new_descriptor='ric_rate_60pctOn_1back_50pctTotBin'
 
 # Folder to store plots and tables from the runs
 results_folder=\"'./results/'$new_descriptor'plots/'\"
 
 # signal rates, backgrounds rates, and run times to iterate over
 signals='5'
-#backgrounds='15'
-backgrounds='15 36 50'
+#backgrounds='14'
+backgrounds='14 36 50'
+#times='365'
 times='365 1825'
 
 # bins_per_year and times must be integers
@@ -27,13 +28,13 @@ bins_per_year='50'
 rate_cns_fcn='cns_time'
 # Parameters: [full_power_frac,off_frac,force_fractions,
 #              correlate_bins,correlate_days,fluctuation_frac]
-rate_cns_params='[0.8,0.0,True,True,40,0.05]'
+rate_cns_params='[0.60,0.0,True,True,40,0.05]'
 #rate_cns_fcn='cns_time_onillon'
 #rate_cns_params='[]'
 
-sig_bin_var=0.05
+sig_bin_var=0.0
 sig_global_var=0.0
-total_bin_var=0.0
+total_bin_var=0.5
 
 # Function for the second background
 rate_back_2_fcn='falling_exp'
@@ -46,14 +47,14 @@ rate_back_2_tree_name='exp_time'
 #rate_back_2_tree_name='flat_time'
 
 # stan model
-stan_model=\"'binned_data_analysis_1D_2back'\"
-stan_model_file=\"'./models/binned_data_analysis_1D_2back.stan'\"
+stan_model=\"'binned_data_analysis_1D_2back_tot_bin_var'\"
+stan_model_file=\"'./models/binned_data_analysis_1D_2back_tot_bin_var.stan'\"
 
 # Run Number to be saved on the end of 
-#runNumber=""
+runNumber=""
 # runNumber can be iterated, to repeat the same test multiple times
-for runNumber in {1..10}; do
-runNumber=$runNumber'_'
+#for runNumber in {1..100}; do
+#runNumber=$runNumber'_'
 
 # Location of the virtual environment activation script
 virtualenv_script='../venv/bin/activate'
@@ -113,6 +114,6 @@ for background in $backgrounds; do
 done
 done
 done
-done
+#done
 
 rm $yaml_script_copy

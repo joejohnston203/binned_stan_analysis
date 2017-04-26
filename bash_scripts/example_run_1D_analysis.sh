@@ -16,9 +16,7 @@ results_folder=\"'./results/'$new_descriptor'plots/'\"
 
 # signal rates, backgrounds rates, and run times to iterate over
 signals='5'
-#backgrounds='14'
 backgrounds='15 36 50'
-#times='365'
 times='365 1825'
 
 # bins_per_year and times must be integers

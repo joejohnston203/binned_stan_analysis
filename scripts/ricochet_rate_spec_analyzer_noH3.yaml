@@ -8,10 +8,10 @@
 #   - A .yaml script, formatted like this file
 #   - A stan model (See the models folder)
 #   - You may also wish to create a bash script to run multiple analysis
-#     in succession (See the bash_scripts folder)
+#     in succession, (See the bash_scripts folder)
 #
 # When copying and modifying this to create a new model, it is recommended to
-# change all instances of 'ric_rate_example' to a description of the new
+# change all instances of 'ric_rate_spec_example' to a description of the new
 # model. This will affect the directory where shapes and fake data is stored,
 # as well as the name of the stored results.
 #
@@ -25,11 +25,11 @@ preprocessing:
   ### locations and file types that will be used to store the shapes and other info.
   # Note that currently, only root is accepted as an output type for shapes.
   # shape_fakedata_generator.py will automatically create any directories that do not yet exist
-  signal_shape_output_file: "data/ric_rate_example/signal_shapes.root"
+  signal_shape_output_file: "data/ric_rate_spec_example/signal_shapes.root"
   signal_shape_output_type: "root"
-  background_shape_output_file: "data/ric_rate_example/background_shapes.root"
+  background_shape_output_file: "data/ric_rate_spec_example/background_shapes.root"
   background_shape_output_type: "root"
-  additional_stan_input_file: "data/ric_rate_example/additional_stan_info.out"
+  additional_stan_input_file: "data/ric_rate_spec_example/additional_stan_info.out"
   ### Info about the independent variables that signals and backgrounds can depend on:
   indep_vars:
     - name: "Time"
@@ -43,6 +43,11 @@ preprocessing:
         # Optional (Default="none"): How the binned shapes should be normalized. Options are-
         #   - "none": Simply integrate the given function over the width of each bin and store
         #   - "integral": Renormalize such that the sum over all bins is 1. (Eg spectra)
+    - name: "Er"
+      bins: 9
+      lower_bound: 100 # Er
+      upper_bound: 1000 # Er
+      renormalization: "integral"
   ### Parameters for generating signal shapes
   signals:
     - name: "Coherent Neutrino Scattering"
@@ -59,9 +64,9 @@ preprocessing:
             # Required only if type=="py_fcn": Path to the directory where the py file with the shape is stored
           module: "ric_shapefunctions"
             # Required only if type=="py_fcn": Name of the module (python file) where the function is located
-          fcn_name: "cns_time" # Time
+          fcn_name: "cns_time" # Time Sig
             # Required only if type=="py_fcn": Name of the function to be accessed.
-          params: [0.58,0.02,True,True,40,0.05] # Time
+          params: [0.6,0.0,True,True,40,0.05] # Time Sig
             # Optional: Array of additional parameters for the python function
           samples_per_bin: 1
             # Optional (Default=10): If type=="py_fcn", the integral of the function is
@@ -79,13 +84,28 @@ preprocessing:
           # names, so they can be accessed when you create the stan model. The default names are "", in
           # which case the fraction will not be stored.
           bin_gauss_var_frac: 0.05 # Time Sig
-          stored_bin_frac_name: "cns_gauss_bin_frac"
+          stored_bin_frac_name: "sig_x_gauss_bin_frac"
           global_gauss_var_frac: 0.0 # Time Sig
-          stored_global_frac_name: "cns_gauss_global_frac"
+          stored_global_frac_name: "sig_x_gauss_global_frac"
+        - type: "data_files"
+          data_file_type: "csv"
+            # Optional: Options are "csv", where two csv files with x and y data
+            # must be required, or "columns", where one file must be provided. In the
+            # second case a delimiter between columns can be specified.
+          x_data_location: "ric_functions/ric_cns_spectrum/recoilEnergies.csv"
+          y_data_location: "ric_functions/ric_cns_spectrum/differentialRates.csv"
+            # Required only if type=="data_file": Paths to the data files
+          tree_name: "cns_Er"
+          x_branch_name: "Er"
+          y_branch_name: "cns"
+          bin_gauss_var_frac: 0.0 # Er Sig
+          stored_bin_frac_name: "sig_y_gauss_bin_frac"
+          global_gauss_var_frac: 0.0 # Er Sig
+          stored_global_frac_name: "sig_y_gauss_global_frac"
   ### The same parameters are used for backgrounds that are used for signals:
   backgrounds:
-    - name: "neutron"
-      fake_data_weight: 1.0
+    - name: "flat_flat"
+      fake_data_weight: 11.6 # Flat Flat
       regenerate: True
       dimension_params:
         - type: "py_fcn"
@@ -93,30 +113,91 @@ preprocessing:
           module: "ric_shapefunctions"
           fcn_name: "flat"
           samples_per_bin: 10
-          tree_name: "neutron_time"
+          tree_name: "flat_flat_time"
           x_branch_name: "time"
-          y_branch_name: "neutrons"
-    - name: "exp_decay"
-      fake_data_weight: 0.0
+          y_branch_name: "flat_flat"
+        - type: "py_fcn"
+          location: "ric_functions/"
+          module: "ric_shapefunctions"
+          fcn_name: "flat"
+          samples_per_bin: 10
+          tree_name: "flat_flat_Er"
+          x_branch_name: "Er"
+          y_branch_name: "flat_flat"
+    - name: "H3"
+      fake_data_weight: 0.0 # H3
       regenerate: True
       dimension_params:
         - type: "py_fcn"
           location: "ric_functions/"
           module: "ric_shapefunctions"
           fcn_name: "falling_exp" # Time Back 2
-          params: [0.0027] # Time Back 2
+          params: [0.0] # Time Back 2
           samples_per_bin: 10 # Time Back 2
-          tree_name: "exp_time" # Time Back 2
+          tree_name: "H3_time" # Time Back 2
           x_branch_name: "time"
           y_branch_name: "background_2"
+        - type: "py_fcn" # Er Back 2
+          location: "ric_functions/"
+          module: "ric_shapefunctions"
+          fcn_name: "falling_exp" # Er Back 2
+          params: [0.0] # Er Back 2
+          samples_per_bin: 10 # Time Back 2
+          tree_name: "H3_Er" # Time Back 2
+          x_branch_name: "Er"
+          y_branch_name: "background_2"
+    - name: "exp_decay_time"
+      fake_data_weight: 0.0
+      regenerate: True
+      dimension_params:
+        - type: "py_fcn"
+          location: "ric_functions/"
+          module: "ric_shapefunctions"
+          fcn_name: "falling_exp" # Time Back 3
+          params: [0.0027] # Time Back 3
+          samples_per_bin: 10 # Time Back 3
+          tree_name: "back3_time" # Time Back 3
+          x_branch_name: "time"
+          y_branch_name: "background_3"
+        - type: "py_fcn"
+          location: "ric_functions/"
+          module: "ric_shapefunctions"
+          fcn_name: "falling_exp" # Er Back 3
+          params: [0.0] # Er Back 3
+          samples_per_bin: 10 # Er Back 3
+          tree_name: "back3_Er" # Er Back 3
+          x_branch_name: "Er"
+          y_branch_name: "background_3"
+    - name: "exp_decay_energy"
+      fake_data_weight: 0.0
+      regenerate: True
+      dimension_params:
+        - type: "py_fcn"
+          location: "ric_functions/"
+          module: "ric_shapefunctions"
+          fcn_name: "falling_exp" # Time Back 4
+          params: [0.0] # Time Back 4
+          samples_per_bin: 10 # Time Back 4
+          tree_name: "back4_time" # Time Back 4
+          x_branch_name: "time"
+          y_branch_name: "background_4"
+        - type: "py_fcn"
+          location: "ric_functions/"
+          module: "ric_shapefunctions"
+          fcn_name: "falling_exp" # Er Back 4
+          params: [0.0001] # Er Back 4
+          samples_per_bin: 10 # Er Back 4
+          tree_name: "back4_Er" # Er Back 4
+          x_branch_name: "Er"
+          y_branch_name: "background_4"
   ### The fake_data_settings dictionary contains settings for fake data generation.
   # It is required only if generate_fake_data==True
   fake_data_settings:
-    fake_data_output_file: "data/ric_rate_example/fake_data.out"
+    fake_data_output_file: "data/ric_rate_spec_example/fake_data.out"
     fake_data_output_type: "R"
     fake_signal_magnitude: 5
       # Required: Total magnitude of all signals combined when generating fake data
-    fake_background_magnitude: 15
+    fake_background_magnitude: 12
       # Required: Total magnitude of all backgrounds combined
     fake_poisson_redistribution: True
       # Optional (Default=True): Whether expected counts should be poisson distributed around actual
@@ -125,10 +206,10 @@ preprocessing:
       # Optional (Default=False): Whether the total in each bin should be gaussian distributed
       # If True, the fractions for individual signals and backgrounds come from
       # bin_gauss_var_frac, etc in the dimension_params dictionary for each signal
-    bin_gauss_var_total: 0.0
+    bin_gauss_var_total: 0.15
     bin_gauss_var_name_total: "total_bin_variation"
       # The amount that total expected counts should be gaussian distributed in each bin. Given as a
-      # fraction of the total expected counts. (Eg if energy resolution can cause total counts to fluctuate).
+      # fraction of the total expected counts. (Eg if energy resolution can cause total counts to fluctuate)
       # Default is 0.0. The fraction is stored in additional_stan_input_info for access by the stan model.
       # Note that fitting for a total variation like this does make the model run more slowly, so currently
       # I have two versions of each model, one that does fit for tot_bin_var, and one that does not.
@@ -139,7 +220,7 @@ preprocessing:
       # Optional (Default=False): Whether prefix_shape_info.txt and prefix_fake_data_info.txt should be stored
     store_info_plots: True
       # Optional (Default=False): Whether plots of the signal/background shapes and fake data should be stored
-    info_output_directory: "./data/ric_rate_example/diagnostics/"
+    info_output_directory: "./data/ric_rate_spec_example/diagnostics/"
       # Required if store_info_text or store_info_plots are True: Directory to store a record of shape and
       # fake data generation.
     info_output_prefix: ""
@@ -150,60 +231,101 @@ morpho:
   do_plots: False
 stan:
   # Name of the model
-  name: "binned_data_analysis_1D_2back" # Stan
+  name: "binned_data_analysis_2D_4back_tot_bin_var" # Stan
   # Model, associated functions, cache folder
   model:
-    file: "./models/binned_data_analysis_1D_2back.stan" # Stan
+    file: "./models/binned_data_analysis_2D_4back_tot_bin_var.stan" # Stan
     function_file: None
     cache: "./cache"
   # Input data
   data:
     files:
-#      - name: "./data/ric_rate_example/additional_stan_info.out"
+#      - name: "./data/ric_rate_spec_example/additional_stan_info.out"
 #        format: "R"
       # A bug in morpho currently only allows one R-format file, so shape_fake_data_generator.py
       # currently copies the contents of additional_stan_input_file to fake_data_output_file if
       # both are stored as "R" files
-      - name: "./data/ric_rate_example/fake_data.out"
+      - name: "./data/ric_rate_spec_example/fake_data.out"
         format: "R"
-      - name: "./data/ric_rate_example/signal_shapes.root"
+      - name: "./data/ric_rate_spec_example/signal_shapes.root"
         format: "root"
         tree: "cns_time"
         branches:
           - name: "cns"
-            stan_alias: "sig_1"
-      - name: "./data/ric_rate_example/background_shapes.root"
+            stan_alias: "x_sig_1"
+      - name: "./data/ric_rate_spec_example/signal_shapes.root"
         format: "root"
-        tree: "neutron_time"
+        tree: "cns_Er"
         branches:
-           - name: "neutrons"
-             stan_alias: "back_1"
-      - name: "./data/ric_rate_example/background_shapes.root"
+          - name: "cns"
+            stan_alias: "y_sig_1"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
         format: "root"
-        tree: "exp_time" # Time Back 2 Stan
+        tree: "flat_flat_time"
+        branches:
+           - name: "flat_flat"
+             stan_alias: "x_back_1"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
+        format: "root"
+        tree: "flat_flat_Er"
+        branches:
+           - name: "flat_flat"
+             stan_alias: "y_back_1"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
+        format: "root"
+        tree: "H3_time" # Time Back 2 Stan
         branches:
            - name: "background_2"
-             stan_alias: "back_2"
+             stan_alias: "x_back_2"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
+        format: "root"
+        tree: "H3_Er" # Er Back 2 Stan
+        branches:
+           - name: "background_2"
+             stan_alias: "y_back_2"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
+        format: "root"
+        tree: "back3_time" # Time Back 3 Stan
+        branches:
+           - name: "background_3"
+             stan_alias: "x_back_3"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
+        format: "root"
+        tree: "back3_Er" # Er Back 3 Stan
+        branches:
+           - name: "background_3"
+             stan_alias: "y_back_3"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
+        format: "root"
+        tree: "back4_time" # Time Back 4 Stan
+        branches:
+           - name: "background_4"
+             stan_alias: "x_back_4"
+      - name: "./data/ric_rate_spec_example/background_shapes.root"
+        format: "root"
+        tree: "back4_Er" # Er Back 4 Stan
+        branches:
+           - name: "background_4"
+             stan_alias: "y_back_4"
     parameters:
-      - startTime: 0
-        signal_lb: 0
+      - signal_lb: 0
         signal_ub: 100
         background_lb: 0
         background_ub: 100
   # Run parameters
   run:
     algorithm: "NUTS"
-    iter: 54000
-    warmup: 50000
+    iter: 14000
+    warmup: 10000
     chain: 1
     n_jobs: 1
-#    sample: "./results/ric_rate_example_analyzer.out"
+#    sample: "./results/ric_rate_spec_example_analyzer.out"
   output:
-    name: "./results/ric_rate_example_analyzer"
+    name: "./results/ric_rate_spec_example_analyzer"
     format: "root"
     tree: "analysis_parameters"
-    save_cache_name: "./results/ric_rate_example_cache_name_file.txt"
-    fit: "./results/ric_rate_example_analysis_fit.pkl"
+    save_cache_name: "./results/ric_rate_spec_example_cache_name_file.txt"
+    fit: "./results/ric_rate_spec_example_analysis_fit.pkl"
     branches:
       - variable: "signal_rate"
         root_alias: "signal_rate"
@@ -215,14 +337,18 @@ stan:
         root_alias: "background_rate_1"
       - variable: "background_rate_2"
         root_alias: "background_rate_2"
+      - variable: "background_rate_3"
+        root_alias: "background_rate_3"
+      - variable: "background_rate_4"
+        root_alias: "background_rate_4"
 non_morpho_plots:
   do_non_morpho_plots: True
   do_histograms: True
   do_correlation_plots: True
   do_data_plots: True
   do_print_table: True
-  plots_output_directory: "./results/ric_rate_example_plots/"
-  plots_output_prefix: ric_rate_example_
+  plots_output_directory: "./results/ric_rate_spec_example_plots/"
+  plots_output_prefix: ric_rate_spec_example_
     # Optional (Default=""): prefix for all files saved to the output directory
   title_postfix: Sig=5,Back=12,Time=1825
     # Optioal (Default=""): text attached to the end of all plot titles
@@ -231,8 +357,8 @@ non_morpho_plots:
   histograms:
     - output_name: "sig_dist.pdf"
       plot_title: "Stan MCMC Signal Rate Distribution"
-      x_label: "Signal"
-      y_label: "Counts per Bin"
+      x_label: "Signal Rate"
+      y_label: "Counts"
       print_quantile_fracs: [] # Sig
       # leg_xstart, etc (Optional): Positioning of the legend.
       #   Only used if at least one label is not "". Defaults
@@ -244,12 +370,12 @@ non_morpho_plots:
       print_mean_stddev: True
         # Optional (Default=True)
       branches:
-        - root_file_name: "./results/ric_rate_example_analyzer.root"
+        - root_file_name: "./results/ric_rate_spec_example_analyzer.root"
           tree_name: "analysis_parameters"
           branch_name: "signal_rate"
           label: "Signal Rate"
           color: 632
-        - root_file_name: "./results/ric_rate_example_analyzer.root"
+        - root_file_name: "./results/ric_rate_spec_example_analyzer.root"
           tree_name: "analysis_parameters"
           branch_name: "signal_rate_smeared"
           label: "Signal Rate Smeared"
@@ -257,43 +383,63 @@ non_morpho_plots:
     - output_name: "back_dist.pdf"
       plot_title: "Stan MCMC Background Rate Distribution"
       x_label: "Total Background Rate"
-      y_label: "Counts per Bin"
+      y_label: "Counts"
       print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
       branches:
-        - root_file_name: "./results/ric_rate_example_analyzer.root"
+        - root_file_name: "./results/ric_rate_spec_example_analyzer.root"
           tree_name: "analysis_parameters"
           branch_name: "background_rate"
           color: 632
     - output_name: "background_1.pdf"
       plot_title: "Stan MCMC Background 1 Rate Distribution"
-      x_label: "Background 1 Rate"
+      x_label: "Background Rate 1"
       y_label: "Counts per Bin"
       print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
       branches:
-        - root_file_name: "./results/ric_rate_example_analyzer.root"
+        - root_file_name: "./results/ric_rate_spec_example_analyzer.root"
           tree_name: "analysis_parameters"
           branch_name: "background_rate_1"
           color: 632
     - output_name: "background_2.pdf"
       plot_title: "Stan MCMC Exponential Background Rate Distribution"
-      x_label: "Background 2 Rate"
+      x_label: "Background Rate 2"
       y_label: "Counts per Bin"
       print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
       branches:
-        - root_file_name: "./results/ric_rate_example_analyzer.root"
+        - root_file_name: "./results/ric_rate_spec_example_analyzer.root"
           tree_name: "analysis_parameters"
           branch_name: "background_rate_2"
+          color: 632
+    - output_name: "background_3.pdf"
+      plot_title: "Stan MCMC Exponential Background Rate Distribution"
+      x_label: "Background Rate 3"
+      y_label: "Counts per Bin"
+      print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
+      branches:
+        - root_file_name: "./results/ric_rate_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "background_rate_3"
+          color: 632
+    - output_name: "background_4.pdf"
+      plot_title: "Stan MCMC Exponential Background Rate Distribution"
+      x_label: "Background Rate 4"
+      y_label: "Counts per Bin"
+      print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
+      branches:
+        - root_file_name: "./results/ric_rate_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "background_rate_4"
           color: 632
   correlation_plots:
     # Two branches (each of the same length) must be specified.
     # A correlation plot will then be created
     - output_name: "sig_vs_back.pdf" 
       plot_title: "Signal vs Background Correlation Plot"
-      root_file_name_y: "./results/ric_rate_example_analyzer.root"
+      root_file_name_y: "./results/ric_rate_spec_example_analyzer.root"
       tree_name_y: "analysis_parameters"
       branch_name_y: "signal_rate"
       y_label: "Extracted Signal Rate"
-      root_file_name_x: "./results/ric_rate_example_analyzer.root"
+      root_file_name_x: "./results/ric_rate_spec_example_analyzer.root"
       tree_name_x: "analysis_parameters"
       branch_name_x: "background_rate"
       x_label: "Extracted Background Rate"
@@ -301,11 +447,11 @@ non_morpho_plots:
   # any number of sets of y points can be specified, and all
   # will be saved to the same plot
   data_plots:
-    - output_name: "data.pdf"
+    - output_name: "time_data.pdf"
       plot_title: "Stan MCMC"
       x_label: "Time (days)"
       y_label: "Counts"
-      x_points_file_name: "./data/ric_rate_example/signal_shapes.root"
+      x_points_file_name: "./data/ric_rate_spec_example/signal_shapes.root"
       x_points_type: "root"
       x_points_tree_name: "cns_time"
       x_points_branch_name: "time"
@@ -318,9 +464,9 @@ non_morpho_plots:
       leg_yend: 0.9
 #      y_min: 100
 #      y_max: 300
+      curr_var: 0
       y_points:
        - computed_points: "true_data"
-         curr_var: 0
           # If computed_points="true_data", then the plotting script
           # will use values in the preprocessing dictionary to find
           # the expected counts for the true signal and background rates
@@ -334,13 +480,10 @@ non_morpho_plots:
           # Default = "none": Options are "none", "frac_sig","frac_back","frac_tot",
           #                   "abs","poisson","extracted"
          error_bar_val: 0.05
-       - file_name: "./data/ric_rate_example/fake_data.out"
+       - file_name: "./data/ric_rate_spec_example/fake_data.out"
          file_type: "R"
          tree_name: "fake_data"
            # if file_type=="R", then tree_name is the name of the variable
-         elts: []
-           # if the variable is a 2D array, then elts can be used to access
-           # one dimension. eg, elts: ["0",":"] uses the first row
          label: "Generated Data"
          color: 1
          marker: 5
@@ -349,14 +492,14 @@ non_morpho_plots:
          label: "Generated Data"
          error_bar_type: "poisson"
        - computed_points: "extracted_data"
-         signal_distribution_file: "./results/ric_rate_example_analyzer.root"
+         signal_distribution_file: "./results/ric_rate_spec_example_analyzer.root"
          signal_distribution_tree: "analysis_parameters"
          signal_distribution_branch: "signal_rate"
          # If there are multiple signals, the branches containing their distributions
          # can be specified. Otherwise, the defauls from preprocessing are used
          signal_weight_trees: []
          signal_weight_branches: []
-         background_distribution_file: "./results/ric_rate_example_analyzer.root"
+         background_distribution_file: "./results/ric_rate_spec_example_analyzer.root"
          background_distribution_tree: "analysis_parameters"
          background_distribution_branch: "background_rate"
          # If there are multiple background, the branches containing their distributions
@@ -374,6 +517,76 @@ non_morpho_plots:
          leg_opt: "PL"
          label: "Extracted Fit"
          error_bar_type: "extracted"
+    - output_name: "Er_data.pdf"
+      plot_title: "Stan MCMC"
+      x_label: "Er (eV)"
+      y_label: "Counts"
+      x_points_file_name: "./data/ric_rate_spec_example/signal_shapes.root"
+      x_points_type: "root"
+      x_points_tree_name: "cns_Er"
+      x_points_branch_name: "Er"
+      # leg_xstart, etc (Optional): Positioning of the legend.
+      #   Only used if at least one label is not "". Defaults
+      #   are xstart=0.7,ystart=0.75,xend=0.99,yend=0.9
+      leg_xstart: 0.7
+      leg_ystart: 0.75
+      leg_xend: 0.99
+      leg_yend: 0.9
+#      y_min: 100
+#      y_max: 300
+      curr_var: 1
+      y_points:
+       - computed_points: "true_data"
+          # If computed_points="true_data", then the plotting script
+          # will use values in the preprocessing dictionary to find
+          # the expected counts for the true signal and background rates
+         color: 432
+         marker: 2
+         draw_opt: "ap3"
+         leg_opt: "L"
+          # draw_opt and leg_opt are settings for TGraphErrors
+         label: "Expected Total Counts"
+         error_bar_type: "frac_sig"
+          # Default = "none": Options are "none", "frac_sig","frac_back","frac_tot",
+          #                   "abs","poisson","extracted"
+         error_bar_val: 0.05
+       - file_name: "./data/ric_rate_spec_example/fake_data.out"
+         file_type: "R"
+         tree_name: "fake_data"
+           # if file_type=="R", then tree_name is the name of the variable
+         label: "Generated Data"
+         color: 1
+         marker: 5
+         draw_opt: "P"
+         leg_opt: "P"
+         label: "Generated Data"
+         error_bar_type: "poisson"
+       - computed_points: "extracted_data"
+         signal_distribution_file: "./results/ric_rate_spec_example_analyzer.root"
+         signal_distribution_tree: "analysis_parameters"
+         signal_distribution_branch: "signal_rate"
+         # If there are multiple signals, the branches containing their distributions
+         # can be specified. Otherwise, the defauls from preprocessing are used
+         signal_weight_trees: []
+         signal_weight_branches: []
+         background_distribution_file: "./results/ric_rate_spec_example_analyzer.root"
+         background_distribution_tree: "analysis_parameters"
+         background_distribution_branch: "background_rate"
+         # If there are multiple background, the branches containing their distributions
+         # can be specified. Otherwise, the defauls from preprocessing are used
+         background_weight_trees: ["analysis_parameters","analysis_parameters"]
+         background_weight_branches: ["background_rate_1","background_rate_2"]
+         print_mean_stddev: True
+          # If computed_points="extracted_data", then the plotting script
+          # will use values in the preprocessing dictionary to find
+          # the shapes of signals and backgrounds, and it will use the
+          # specified trees to get the signal and background rates from stan
+         color: 2
+         marker: 4
+         draw_opt: "P"
+         leg_opt: "PL"
+         label: "Extracted Fit"
+         error_bar_type: "extracted"
   print_table:
     do_tex_table: True
     tex_output_name: table.tex
@@ -381,7 +594,7 @@ non_morpho_plots:
     print_true_back: True
     print_range: True
     var_range_num: 0
-    files: ["./results/ric_rate_example_analyzer.root","./results/ric_rate_example_analyzer.root"]
+    files: ["./results/ric_rate_spec_example_analyzer.root","./results/ric_rate_spec_example_analyzer.root"]
     trees: ["analysis_parameters","analysis_parameters"]
     branches: ["signal_rate","background_rate"]
     print_means: [True,True]

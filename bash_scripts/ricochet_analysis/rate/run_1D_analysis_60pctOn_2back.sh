@@ -4,7 +4,7 @@
 # will be copied before modifying, so the original script will be unchanged.
 # The copy will be deleted when this script is done.
 yaml_script=./scripts/example_ricochet_rate_analyzer.yaml
-#yaml_script_copy=./scripts/temp_example_ricochet_rate_analyzer.yaml
+yaml_script_copy=./scripts/temp_60pctOn_2back_ricochet_rate_analyzer.yaml
 
 # Replace all instances of init_descriptor with new_descriptor in
 # the .yaml script
@@ -16,7 +16,7 @@ results_folder=\"'./results/'$new_descriptor'plots/'\"
 
 # signal rates, backgrounds rates, and run times to iterate over
 signals='5'
-backgrounds='16 36 50'
+backgrounds='15 36 50'
 times='365 1825'
 
 # bins_per_year and times must be integers
