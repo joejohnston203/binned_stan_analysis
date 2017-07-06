@@ -15,6 +15,8 @@ import ROOT
 import random
 import math
 
+import scipy.integrate as spint
+
 # Functions for time dependence
 # ----------------------------------------------------------------------
 # Uniform time dependence
@@ -34,6 +36,14 @@ def falling_exp(x,params):
     else:
         alpha = 0.0
     return falling_exp_0(x,alpha)
+# ----------------------------------------------------------------------
+def gaus_norm(x,mu,sigma):
+    return 1.0/np.sqrt(2*np.pi*sigma**2)*np.exp(-(x-mu)**2/2.0/sigma**2)
+def falling_exp_convolv_temp(x,mu,sigma,lb,ub,params):
+    return spint.quad(lambda t:falling_exp(x-t,params)*gaus_norm(t,mu,sigma),lb,ub)[0]
+def falling_exp_convolved(x,params):
+    return falling_exp_convolv_temp(x,0.0,15,-100,100,params)
+falling_exp_convolved = np.vectorize(falling_exp_convolved)
 # ----------------------------------------------------------------------
 # rate_cns_shape:
 # Rate shape at Double Chooz, defined s.t. the value at full power is 1. 

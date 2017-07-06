@@ -1,4 +1,3 @@
-# ricochet_sensitivity
 Stan/morpho model to analyze the sensitivity of any experiment where the data can be binned. Specific scripts analyze the sensitivity of Ricochet at the Double Chooz Reactor.
 
 Requirements

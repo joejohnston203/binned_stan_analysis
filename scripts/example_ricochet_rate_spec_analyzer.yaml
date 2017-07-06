@@ -44,7 +44,7 @@ preprocessing:
         #   - "none": Simply integrate the given function over the width of each bin and store
         #   - "integral": Renormalize such that the sum over all bins is 1. (Eg spectra)
     - name: "Er"
-      bins: 9
+      bins: 9 # Er
       lower_bound: 100 # Er
       upper_bound: 1000 # Er
       renormalization: "integral"
