@@ -1,11 +1,15 @@
 Stan/morpho model to analyze the sensitivity of any experiment where the data can be binned. Specific scripts analyze the sensitivity of Ricochet at the Double Chooz Reactor.
 
+The frequentist folder contains a python program to perform a frequentist analysis. It takes configuration scripts for the Bayesian code and performs a frequentist analysis. See the end of this README for more details on its structure and use.
+
 Requirements
 ======
 
   Designed to work with version 1.1.5 of morpho. https://github.com/project8/morpho/tree/v1.1.5
   
   You will need to install root in order to have access to pyroot.
+
+  If you want to use the given example analysis, update activate_venv.sh to point to your virtualenv directory where morpho was installed.
   
 Directory Structure
 ======
@@ -133,5 +137,6 @@ Running
   discard any chains that did not properly converge, then average the results of the
   remaining chains to get final results.
 
-  The results that went into the paper can be accessed at:
+  The results that went into the Ricochet at Double Chooz paper can be accessed at:
   https://www.dropbox.com/sh/owa9y6qtmdcwenk/AABiqeQbo0WBhvnxuDFqY1VEa?dl=0
+

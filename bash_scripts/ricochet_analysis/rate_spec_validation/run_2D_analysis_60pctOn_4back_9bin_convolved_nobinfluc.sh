@@ -53,7 +53,7 @@ for runNumber in {1..10}; do
 #runNumber=$runNumber'_'
 
 # Location of the virtual environment activation script
-virtualenv_script='../venv/bin/activate'
+virtualenv_script='./activate_venv.sh'
 
 # -----------------------------------------------------------------------------
 . $virtualenv_script

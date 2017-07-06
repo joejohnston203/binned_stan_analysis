@@ -49,7 +49,7 @@ stan_model=\"'binned_data_analysis_1D_2back'\"
 stan_model_file=\"'./models/binned_data_analysis_1D_2back.stan'\"
 
 # Location of the virtual environment activation script
-virtualenv_script='../venv/bin/activate'
+virtualenv_script='./activate_venv.sh'
 
 # Run Number to be saved on the end of 
 #runNumber=""
