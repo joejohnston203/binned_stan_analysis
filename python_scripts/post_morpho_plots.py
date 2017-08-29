@@ -10,7 +10,7 @@
 # See scripts/example_ricochet_rate_analyzer.yaml or
 # scripts/example_ricochet_rate_spectrum_analyzer.yaml as an example of
 # how to format a .yaml file to work with this script. Note that
-# shape_fakedata_generator.py must be run before some of these plots
+# pre_morpho_processing.py must be run before some of these plots
 # can be made.
 # ----------------------------------------------------------------------
 
@@ -26,10 +26,12 @@ import numpy as np
 import ROOT as ROOT# import ROOT, TStyle, TCanvas, TH1F, TGraph, TLatex, TLegend, TFile, TTree, TGaxis, TRandom3, TNtuple, TTree
 from array import array
 
-import root_tools
-from root_tools import *
-from misc_tools import *
-from shape_fakedata_generator import sum_weighted_shapes
+import sensitivitytools.root_tools
+from sensitivitytools.root_tools import *
+from sensitivitytools.input_processing import *
+
+# BEFORE COMITTING: Remove pre_morpho_processsing
+from sensitivitytools.data_generation import sum_weighted_shapes
 
 # ----------------------------------------------------------------------
 def make_hist_plot(hist_settings,out_dir,out_prefix="",title_postfix=""):
@@ -414,11 +416,11 @@ if __name__== '__main__':
                 cdata = update_from_arguments(cdata,args.param)
         except Exception as err:
             logger.debug(err)
-    plot_dict = read_param(cdata,'non_morpho_plots','required')
-    if(read_param(plot_dict,'do_non_morpho_plots',True)):
+    plot_dict = read_param(cdata,'post_morpho_plots','required')
+    if(read_param(plot_dict,'do_post_morpho_plots',True)):
         print("Starting plotting")
         # Set environment to make plots look nice
-        root_tools.set_root_env()
+        sensitivitytools.root_tools.set_root_env()
         out_dir = read_param(plot_dict,'plots_output_directory','required')
         print("Plots will be stored in %s"%out_dir)
         create_path(out_dir,False)

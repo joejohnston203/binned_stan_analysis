@@ -1,4 +1,4 @@
-#!/usr/bin/evn python
+#!/usr/bin/env python
 #
 # Helper code to work with root files and make plots in root
 # ----------------------------------------------------------------------

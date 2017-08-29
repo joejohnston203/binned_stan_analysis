@@ -113,9 +113,9 @@ for background in $backgrounds; do
     bins=$((exp))
     sed -i 's/\(.*bins: \).*\( # '$tag'\)/\1'$bins'\2/' $yaml_script_copy
 
-    python helper_scripts/shape_fakedata_generator.py -c $yaml_script_copy
+    python python_scripts/pre_morpho_processing.py -c $yaml_script_copy
     morpho -c $yaml_script_copy
-    python ./helper_scripts/non_morpho_plots.py -c $yaml_script_copy
+    python ./python_scripts/post_morpho_plots.py -c $yaml_script_copy
 done
 done
 done

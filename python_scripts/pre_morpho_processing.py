@@ -36,8 +36,9 @@ import sys
 from importlib import import_module
 import os
 
-from root_tools import *
-from misc_tools import *
+from sensitivitytools.data_generation import *
+from sensitivitytools.root_tools import *
+from sensitivitytools.input_processing import *
 
 # ----------------------------------------------------------------------
 # Arguments:
@@ -264,7 +265,6 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
                 if(curr_global_var!=""):
                     txt_file.write("\tfake data global gauss frac = %.3e, variable = %s\n" % (curr_global_frac,curr_global_var))
 
-    # Close root and text files
     myfile.Close()
     if(store_info):
         txt_file.close()
@@ -499,18 +499,10 @@ def generate_fake_data(vars_dict,signals_dict,signals_input_file,signals_input_t
     return
 # ----------------------------------------------------------------------
 # Main method
-if __name__== '__main__':
-    # Get settings from .yaml configuration file
-    args = parse_args()
-    with open(args.config, 'r') as cfile:
-        try:
-            cdata = yload(cfile)
-            if args.param:
-                cdata = update_from_arguments(cdata,args.param)
-        except Exception as err:
-            logger.debug(err)
-    prep_dict = read_param(cdata,'preprocessing','required')
-
+# Input: preprocessing dictionary
+# Can generate and store shapes for each signal and background
+# Can generate fake data
+def process(prep_dict):
     vars_dict = read_param(prep_dict,'indep_vars','required')
     signal_dict = read_param(prep_dict,'signals','required')
     signal_output_file = read_param(prep_dict,'signal_shape_output_file','required')
@@ -560,4 +552,18 @@ if __name__== '__main__':
                            opt_out_settings,additional_file_name)
 
     print("Preprocessing complete")
+# ----------------------------------------------------------------------
+# Main method
+if __name__== '__main__':
+    # Get settings from .yaml configuration file
+    args = parse_args()
+    with open(args.config, 'r') as cfile:
+        try:
+            cdata = yload(cfile)
+            if args.param:
+                cdata = update_from_arguments(cdata,args.param)
+        except Exception as err:
+            logger.debug(err)
+    prep_dict = read_param(cdata,'preprocessing','required')
+    process(prep_dict)
 # ----------------------------------------------------------------------

@@ -1,6 +1,6 @@
 Stan/morpho model to analyze the sensitivity of any experiment where the data can be binned. Specific scripts analyze the sensitivity of Ricochet at the Double Chooz Reactor.
 
-The frequentist folder contains a python program to perform a frequentist analysis. It takes configuration scripts for the Bayesian code and performs a frequentist analysis. See the end of this README for more details on its structure and use.
+The frequentist_analysis folder contains a python program to perform a frequentist analysis. It takes configuration scripts for the Bayesian code and performs a frequentist analysis. See the end of this README for more details on its structure and use.
 
 Requirements
 ======
@@ -21,7 +21,7 @@ Directory Structure
     The .yaml configuration files for stan models should be stored here. The
     .yaml file will include parameters that will be used for preprocessing,
     such as generating fake data, under the header 'preprocessing:'. It will also
-    include parameters for plots, under the header 'non_morpho_plots:'.
+    include parameters for plots, under the header 'post_morpho_plots:'.
 
     See example_ricochet_rate_analyzer.yaml or example_ricochet_rate_spec_analyzer.yaml
     for examples of how .yaml files should be created.
@@ -36,7 +36,7 @@ Directory Structure
 
     Stan models (.stan files) are stored here. For example,
     binned_data_analysis_1D_1back.stan is a model that takes the inputs from
-    shape_fakedata_generator.py, then runs an analysis of the generated 1-dimensional
+    pre_morpho_processing.py, then runs an analysis of the generated 1-dimensional
     data assuming that it results from a single signal and a single background.
     binned_data_analysis_2D_4back_tot_bin_var.stan is a model that analyzes
     2-dimensional data assuming that it results from one signal and four backgrounds.
@@ -62,16 +62,16 @@ Directory Structure
 
   The following directory should not be altered when creating new models:
 
-  helper_scripts
+  python_scripts
   
-    shape_fakedata_generator.py: Can generates the shape of signals and
+    pre_morpho_processing.py: Can generates the shape of signals and
     backgrounds using inputs from a .yaml file, then stores the shapes of
     the signals and backgrounds in the data directory. Informational
     outputs, such as plots of each background shape, can optionally be
     generated and stored. The generated shapes and inputs from a .yaml config
     file can then be used to generate fake data.
 
-    non_morpho_plots.py: Creates histograms of analysis parameters, correlation
+    post_morpho_plots.py: Creates histograms of analysis parameters, correlation
     plots, and plots of spectra or rate vs time. Takes inputs from a .yaml file.
 
     root_tools.py: Contains tools to read and write root files, as well as make
@@ -93,12 +93,12 @@ Directory Structure
     will be stored here. Generated fake data will be stored here. Diagnostic outputs
     and plots, such as plots of signal and background shapes, can also be stored. Nothing
     in this folder should be edited by hand, because it will all be generated
-    by scripts in the helper_scripts folder. 
+    by scripts in the python_scripts folder.
 
   results
 
     Outputs will be stored here. Specifically, stan will store a .root file with
-    distributions of parameters, a .pkl file, and a cache_name_file. non_morpho_plots.py
+    distributions of parameters, a .pkl file, and a cache_name_file. post_morpho_plots.py
     will then store plots and a table of the results.
 
   cache
@@ -111,17 +111,17 @@ Running
 
   Once you have created a yaml_script, the following commands run the analysis and create plots:
 
-  python helper_scripts/shape_fakedata_generator.py -c $yaml_script
+  python python_scripts/pre_morpho_processing.py -c $yaml_script
   
   morpho -c $yaml_script
   
-  python ./helper_scripts/non_morpho_plots.py -c $yaml_script
+  python python_scripts/post_morpho_plots.py -c $yaml_script
 
   To run the rate only ricochet analysis, use the script ./bash_scripts/example_simple_run.sh.
   Edit the variable virtualenv_script to point to the activation script for the
   virtualenv environment that you set up when installing stan. Then run the script from
   the top directory. This will use ./scripts/example_ricochet_rate_analyzer.yaml to
-  do preprocessing, run stan, and create plots with non_morpho_plots.py
+  do preprocessing, run stan, and create plots with post_morpho_plots.py
 
   example_1D_analysis.sh and example_2D_analysis.sh both iterate over different signal and
   background magnitudes, doing preprocessing, running stan, and creating plots for each
@@ -140,3 +140,35 @@ Running
   The results that went into the Ricochet at Double Chooz paper can be accessed at:
   https://www.dropbox.com/sh/owa9y6qtmdcwenk/AABiqeQbo0WBhvnxuDFqY1VEa?dl=0
 
+Frequentist Analysis
+======
+
+This directory contains code to do a frequentist analysis. It takes a .yaml configuration file, and uses the same pre_processing and post_morpho_plots sections as the .yaml files for a bayesian analysis. Instead of the morpho and stan sections, a section labelled frequentist contains settings for the frequentist analysis.
+
+# Directory Structure (inside frequentist_analysis)
+
+The following directories can be changed when creating new models
+
+models
+
+  Likelihood functions are stored here.
+
+../scripts, ../ric_functions
+
+  .yaml scripts for the frequentist analysis will be formatted very similarly
+  to the scripts for the bayesian analysis. In fact, the preprocessing section
+  can be identical. However, a frequentist section must be added with parameters
+  in place of the stan and morpho sections, and the plotting section will be
+  different.
+
+The following should not be edited
+
+analysis_scripts
+
+  This contains the actual python code that does the analysis
+
+data, results
+
+  These folders are the currently specified locations in the .yaml script. If
+  the analysis is called from inside frequentist_analysis, then these
+  directories will also be created inside frequentist_analysis

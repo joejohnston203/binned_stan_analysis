@@ -15,7 +15,7 @@
 # model. This will affect the directory where shapes and fake data is stored,
 # as well as the name of the stored results.
 #
-### The preprocessing dictionary contains inputs for shape_fakedata_generator.py
+### The preprocessing dictionary contains inputs for pre_morpho_processing.py
 preprocessing:
   do_preprocessing: True
   generate_shapes: True
@@ -24,7 +24,7 @@ preprocessing:
     # Optional (Default=True): Whether fake data should be generated
   ### locations and file types that will be used to store the shapes and other info.
   # Note that currently, only root is accepted as an output type for shapes.
-  # shape_fakedata_generator.py will automatically create any directories that do not yet exist
+  # pre_morpho_processing.py will automatically create any directories that do not yet exist
   signal_shape_output_file: "data/ric_rate_spec_example/signal_shapes.root"
   signal_shape_output_type: "root"
   background_shape_output_file: "data/ric_rate_spec_example/background_shapes.root"
@@ -341,8 +341,8 @@ stan:
         root_alias: "background_rate_3"
       - variable: "background_rate_4"
         root_alias: "background_rate_4"
-non_morpho_plots:
-  do_non_morpho_plots: True
+post_morpho_plots:
+  do_post_morpho_plots: True
   do_histograms: True
   do_correlation_plots: True
   do_data_plots: True
