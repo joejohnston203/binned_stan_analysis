@@ -67,6 +67,10 @@ preprocessing:
             # Optional (Default=10): If type=="py_fcn", the integral of the function is
             #          calculated using the rectangle method. samples_per_bin is the number of samples
             #          to take, evenly spaced, over the width of each bin
+#        - type: "root_histo"
+#          location: "ric_functions/root_files/cns_time.root"
+#          histo_tree: "cns_time"
+#          histo_branch: "cns_time"
           ### Shapes currently must be stored as root files. These are the tree and branches for the shape points:
           tree_name: "cns_time"
           x_branch_name: "time"

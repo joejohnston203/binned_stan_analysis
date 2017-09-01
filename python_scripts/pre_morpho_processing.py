@@ -144,9 +144,10 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
     if(output_type != "root"):
         print("%s not yet implemented. Shapes currently are saved as \".root\".")
     
-    # Create root file to save all shapes of this set of signals
+    # Recreate root file used to save all shapes of this set of signals
     create_path(output_file,True)
     myfile = ROOT.TFile(output_file,"RECREATE")
+    myfile.Close()
     if(store_info):
         txt_file.write("%s output file: %s\n"%(label,output_file))
 
@@ -220,6 +221,19 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
                 x_vals = [1.0]
                 y_vals = [1.0]
                 print("Reading shape from stan_fcn not yet implemented")
+            elif fcn_type == "root_histo":
+                tempfile = ROOT.TFile(read_param(dim_p, 'location', 'required'), "READ")
+                tree = tempfile.Get(read_param(dim_p, 'histo_tree', 'required'))
+                rh = ROOT.TH1F("rh","",nbins,lb,ub)
+                br_name = read_param(dim_p, 'histo_branch', 'required')
+                tree.Draw(br_name+">>rh","","goff")
+                x_vals = np.empty(nbins)
+                y_vals = np.empty(nbins)
+                for i in range(0,nbins):
+                    # np arr index starts at 0, root index starts at 1
+                    x_vals[i] = rh.GetBinCenter(i+1);
+                    y_vals[i] = rh.GetBinContent(i+1);
+                tempfile.Close()
             else:
                 print("ERROR: %s type==\"%s\" not valid" % (sig_name,fcn_type))
                 print("       Type must be \"py_fcn\", \"data_files\", or \"stan_fcn\"")
@@ -240,7 +254,9 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
                           norm_type,\
                           tree_name,curr_x_name,curr_y_name,
                           save_plot_file_name)
+            myfile = ROOT.TFile(output_file,"UPDATE")
             curr_tree.Write()
+            myfile.Close()
 
             # Access and store the fractions for gaussian redistribution
             if(additional_file_name!=""):
@@ -265,7 +281,6 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
                 if(curr_global_var!=""):
                     txt_file.write("\tfake data global gauss frac = %.3e, variable = %s\n" % (curr_global_frac,curr_global_var))
 
-    myfile.Close()
     if(store_info):
         txt_file.close()
     if(additional_file_name!=""):
