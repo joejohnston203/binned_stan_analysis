@@ -59,13 +59,19 @@ def rebin_data(xdata,ydata,nbins,lb,ub,norm_type="none",
                tree_name="shape",
                x_name="xdata",y_name="ydata",
                save_plot_name="",
-               rescale_factor=1.0):
+               rescale_factor=1.0,
+               variable_binning=None):
 
     # Bin the shape
     dx = (ub-lb)/float(nbins)
-    h = ROOT.TH1F("h","",nbins,lb,ub)
-    hw = ROOT.TH1F("hw","",nbins,lb,ub)
-    havg = ROOT.TH1F("havg","",nbins,lb,ub)
+    if(variable_binning is None):
+        h = ROOT.TH1F("h","",nbins,lb,ub)
+        hw = ROOT.TH1F("hw","",nbins,lb,ub)
+        havg = ROOT.TH1F("havg","",nbins,lb,ub)
+    else:
+        h = ROOT.TH1F("h","",len(variable_binning)-1,variable_binning)
+        hw = ROOT.TH1F("hw","",len(variable_binning)-1,variable_binning)
+        havg = ROOT.TH1F("havg","",len(variable_binning)-1,variable_binning)
     list_x = []
     list_y = []
     for j in range(0,len(xdata)):
@@ -151,13 +157,18 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
     if(store_info):
         txt_file.write("%s output file: %s\n"%(label,output_file))
 
-    for i in range(0,len(vars_dict)):
+    for var_index in range(0,len(vars_dict)):
         # iterate over all independent variables
-        curr_var = vars_dict[i]
-        curr_var_name = read_param(curr_var,'name','x_%i'%i)
+        curr_var = vars_dict[var_index]
+        curr_var_name = read_param(curr_var,'name','x_%i'%var_index)
         nbins = int(read_param(curr_var,'bins',30))
         lb = float(read_param(curr_var,'lower_bound','required'))
         ub = float(read_param(curr_var,'upper_bound','required'))
+        binning_file = read_param(curr_var,'binning_file','none')
+        if(binning_file!='none'):
+            binning = np.loadtxt(binning_file)
+        else:
+            binning = None
         if(print_debug):
             print("Current independent variable: %s" % curr_var_name)
             print("\tlb = %f"%lb)
@@ -177,10 +188,10 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
             if(print_debug):
                 print("\tCurrent %s: %s" % (label,sig_name))
             dim_params = read_param(sig,'dimension_params','required')
-            dim_p = dim_params[i]
+            dim_p = dim_params[var_index]
 
             fcn_type = read_param(dim_p,'type','required')
-            
+
             # Get x and y values for the current function
             if fcn_type == "py_fcn":
                 # Get the function
@@ -224,12 +235,17 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
             elif fcn_type == "root_histo":
                 tempfile = ROOT.TFile(read_param(dim_p, 'location', 'required'), "READ")
                 tree = tempfile.Get(read_param(dim_p, 'histo_tree', 'required'))
-                rh = ROOT.TH1F("rh","",nbins,lb,ub)
+                if(binning is None):
+                    print("Fixed binning")
+                    rh = ROOT.TH1F("rh","",nbins,lb,ub)
+                else:
+                    print("Variable binning")
+                    rh = ROOT.TH1F("rh","",len(binning)-1,binning)
                 br_name = read_param(dim_p, 'histo_branch', 'required')
                 tree.Draw(br_name+">>rh","","goff")
-                x_vals = np.empty(nbins)
-                y_vals = np.empty(nbins)
-                for i in range(0,nbins):
+                x_vals = np.empty(len(binning)-1)
+                y_vals = np.empty(len(binning)-1)
+                for i in range(0,len(binning)-1):
                     # np arr index starts at 0, root index starts at 1
                     x_vals[i] = rh.GetBinCenter(i+1);
                     y_vals[i] = rh.GetBinContent(i+1);
@@ -250,10 +266,11 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
             curr_y_name = read_param(dim_p,'y_branch_name',sig_name)
 
             curr_tree = \
-               rebin_data(x_vals,y_vals,nbins,lb,ub,\
+               rebin_data(x_vals,y_vals,len(x_vals),lb,ub,\
                           norm_type,\
                           tree_name,curr_x_name,curr_y_name,
-                          save_plot_file_name)
+                          save_plot_file_name,
+                          variable_binning=binning)
             myfile = ROOT.TFile(output_file,"UPDATE")
             curr_tree.Write()
             myfile.Close()

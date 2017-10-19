@@ -1,0 +1,481 @@
+# Configuration script for a 1 dimensional rate only analysis
+# This script can serve as a template for any 1 dimensional binned data analysis
+#
+# In order to create a new model, you need to create three files:
+#   - Files to describe the shapes of your signals and backgrounds, either as
+#     python functions or text files (two csv files with x and y points)
+#     (see the functions/cuore_functions folder)
+#   - A .yaml script, formatted like this file
+#   - A stan model (See the models folder)
+#   - You may also wish to create a bash script to run multiple analysis
+#     in succession (See the bash_scripts folder)
+#
+# When copying and modifying this to create a new model, it is recommended to
+# change all instances of 'cuore_spec_example' to a description of the new
+# model. This will affect the directory where shapes and fake data is stored,
+# as well as the name of the stored results.
+#
+### The preprocessing dictionary contains inputs for pre_morpho_processing.py
+preprocessing:
+  do_preprocessing: True
+  generate_shapes: True
+    # Optional (Default=True): Whether shapes of signals and backgrounds should be generated
+  generate_fake_data: True
+    # Optional (Default=True): Whether fake data should be generated
+  ### locations and file types that will be used to store the shapes and other info.
+  # Note that currently, only root is accepted as an output type for shapes.
+  # pre_morpho_processing.py will automatically create any directories that do not yet exist
+  signal_shape_output_file: "data/cuore_spec_example/signal_shapes.root"
+  signal_shape_output_type: "root"
+  background_shape_output_file: "data/cuore_spec_example/background_shapes.root"
+  background_shape_output_type: "root"
+  additional_stan_input_file: "data/cuore_spec_example/additional_stan_info.out"
+  ### Info about the independent variables that signals and backgrounds can depend on:
+  indep_vars:
+    - name: "Energy"
+        # Optional (Default='x_i'): Printed in debugging output and optional stored info
+      bins: 55 # Energy
+        # Optional (Default=30): Number of bins to use for this independent variable
+      binning_file: "functions/cuore_functions/temp_binning.txt"
+        # Optional (Defaul='none'): Replace bins with variable binning
+        #                           Currently only work for root histogram inputs.
+      lower_bound: 118 # Energy
+      upper_bound: 2500 # Energy
+        # Lower and upper bounds to use when binning shapes for this variable
+      renormalization: "none"
+        # Optional (Default="none"): How the binned shapes should be normalized. Options are-
+        #   - "none": Simply integrate the given function over the width of each bin and store
+        #   - "integral": Renormalize such that the sum over all bins is 1. (Eg spectra)
+  ### Parameters for generating signal shapes
+  signals:
+    - name: "Coherent Neutrino Scattering"
+        # Optional (Default='Signal_i'): Printed in debugging output and optional stored info
+      fake_data_weight: 0.0005
+        # Optional (Default=1): Relative weight of this signal (or background) when generating fake data
+      regenerate: True
+        # Optional (Default="True"): Whether or not the shapes of this should be regenerated
+      dimension_params:
+        # give the function for this signal for each independent variable
+        - type: "root_histo"
+          location: "functions/cuore_functions/root_files/10mK-co60_cnaf113.root"
+          histo_tree: "outTree"
+          histo_branch: "Ener1"
+          ### Shapes currently must be stored as root files. These are the tree and branches for the shape points:
+          tree_name: "10mK_co60"
+          x_branch_name: "energy"
+          y_branch_name: "cns"
+          ### When generating fake data, the value of this signal in each bin can be gaussian distributed
+          # by some fraction before generating a number of counts, and/or the global signal rate can be
+          # gaussian distributed by some fraction.
+          # The default for each of these is 0.0, in which case there is no gaussian distribution.
+          # These fractions will be stored as doubles in the additional_stan_input_file under the given
+          # names, so they can be accessed when you create the stan model. The default names are "", in
+          # which case the fraction will not be stored.
+          bin_gauss_var_frac: 0.0 # Energy Sig
+          stored_bin_frac_name: "cns_gauss_bin_frac"
+          global_gauss_var_frac: 0.0 # Energy Sig
+          stored_global_frac_name: "cns_gauss_global_frac"
+  ### The same parameters are used for backgrounds that are used for signals:
+  backgrounds:
+    - name: "10mk_k40"
+      fake_data_weight: 0.01
+      regenerate: True
+      dimension_params:
+        - type: "root_histo"
+          location: "functions/cuore_functions/root_files/10mK-k40_cnaf121.root"
+          histo_tree: "outTree"
+          histo_branch: "Ener1"
+          tree_name: "10mK_k40_energy"
+          x_branch_name: "energy"
+          y_branch_name: "10mK_k40"
+    - name: "10mKFlan_th232"
+      fake_data_weight: 0.5
+      regenerate: True
+      dimension_params:
+        - type: "root_histo"
+          location: "functions/cuore_functions/root_files/10mKFlan-th232_cnaf103.root"
+          histo_tree: "outTree"
+          histo_branch: "Ener1"
+          tree_name: "10mKFlan_th232_energy" # Energy Back 2
+          x_branch_name: "energy"
+          y_branch_name: "10mKFlan_th232"
+    - name: "10mKFlan_u238"
+      fake_data_weight: 1.0
+      regenerate: True
+      dimension_params:
+        - type: "root_histo"
+          location: "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
+          histo_tree: "outTree"
+          histo_branch: "Ener1"
+          tree_name: "10mKFlan_u238_energy" # Energy Back 2
+          x_branch_name: "energy"
+          y_branch_name: "10mKFlan_u238"
+  ### The fake_data_settings dictionary contains settings for fake data generation.
+  # It is required only if generate_fake_data==True
+  fake_data_settings:
+    fake_data_output_file: "data/cuore_spec_example/fake_data.out"
+    fake_data_output_type: "R"
+    fake_signal_magnitude: 0.0005
+      # Required: Total magnitude of all signals combined when generating fake data
+    fake_background_magnitude: 1.51
+      # Required: Total magnitude of all backgrounds combined
+    fake_poisson_redistribution: True
+      # Optional (Default=True): Whether expected counts should be poisson distributed around actual
+
+    fake_gaussian_redistribution: True
+      # Optional (Default=False): Whether the total in each bin should be gaussian distributed
+      # If True, the fractions for individual signals and backgrounds come from
+      # bin_gauss_var_frac, etc in the dimension_params dictionary for each signal
+    bin_gauss_var_total: 0.0
+    bin_gauss_var_name_total: "total_bin_variation"
+      # The amount that total expected counts should be gaussian distributed in each bin. Given as a
+      # fraction of the total expected counts. (Eg if energy resolution can cause total counts to fluctuate).
+      # Default is 0.0. The fraction is stored in additional_stan_input_info for access by the stan model.
+      # Note that fitting for a total variation like this does make the model run more slowly, so currently
+      # I have two versions of each model, one that does fit for tot_bin_var, and one that does not.
+  optional_output_settings:
+    print_debug_statements: True
+      # Optional (Default=False): Whether statements about the progress should be printed to the terminal
+    store_info_text: True
+      # Optional (Default=False): Whether prefix_shape_info.txt and prefix_fake_data_info.txt should be stored
+    store_info_plots: True
+      # Optional (Default=False): Whether plots of the signal/background shapes and fake data should be stored
+    info_output_directory: "./data/cuore_spec_example/diagnostics/"
+      # Required if store_info_text or store_info_plots are True: Directory to store a record of shape and
+      # fake data generation.
+    info_output_prefix: ""
+      # Optional (Default=""): prefix of prefix_shape_info.txt, prefix_fake_data_info.txt, and stored plots
+morpho:
+  do_stan: True
+  do_postprocessing: False
+  do_plots: True
+stan:
+  # Name of the model
+  name: "binned_data_analysis_1D_3back" # Stan
+  # Model, associated functions, cache folder
+  model:
+    file: "./models/binned_data_analysis_1D_3back.stan" # Stan
+    function_file: None
+    cache: "./cache"
+  # Input data
+  data:
+    files:
+#      - name: "./data/cuore_spec_example/additional_stan_info.out"
+#        format: "R"
+      # A bug in morpho currently only allows one R-format file, so shape_fake_data_generator.py
+      # currently copies the contents of additional_stan_input_file to fake_data_output_file if
+      # both are stored as "R" files
+      - name: "./data/cuore_spec_example/fake_data.out"
+        format: "R"
+      - name: "./data/cuore_spec_example/signal_shapes.root"
+        format: "root"
+        tree: "10mK_co60"
+        branches:
+          - name: "cns"
+            stan_alias: "sig_1"
+      - name: "./data/cuore_spec_example/background_shapes.root"
+        format: "root"
+        tree: "10mK_k40_energy"
+        branches:
+           - name: "10mK_k40"
+             stan_alias: "back_1"
+      - name: "./data/cuore_spec_example/background_shapes.root"
+        format: "root"
+        tree: "10mKFlan_th232_energy"
+        branches:
+           - name: "10mKFlan_th232"
+             stan_alias: "back_2"
+      - name: "./data/cuore_spec_example/background_shapes.root"
+        format: "root"
+        tree: "10mKFlan_u238_energy"
+        branches:
+           - name: "10mKFlan_u238"
+             stan_alias: "back_3"
+    parameters:
+      - startTime: 0
+        signal_lb: 0
+        signal_ub: 100
+        background_lb: 0
+        background_ub: 100
+  # Run parameters
+  run:
+    algorithm: "NUTS"
+    iter: 54000
+    warmup: 50000
+    chain: 1
+    n_jobs: 1
+#    sample: "./results/cuore_spec_example_analyzer.out"
+  output:
+    name: "./results/cuore_spec_example_analyzer"
+    format: "root"
+    tree: "analysis_parameters"
+    save_cache_name: "./results/cuore_spec_example_cache_name_file.txt"
+    fit: "./results/cuore_spec_example_analysis_fit.pkl"
+    branches:
+      - variable: "signal_rate"
+        root_alias: "signal_rate"
+      - variable: "signal_rate_smeared"
+        root_alias: "signal_rate_smeared"
+      - variable: "background_rate"
+        root_alias: "background_rate"
+      - variable: "background_rate_1"
+        root_alias: "background_rate_1"
+      - variable: "background_rate_2"
+        root_alias: "background_rate_2"
+      - variable: "background_rate_3"
+        root_alias: "background_rate_3"
+plot:
+  which_plot:
+    - method_name: "histo"
+      module_name: "histo"
+      title: "10mK_Co60_Normalization_Distribution"
+      input_file_name: "./results/cuore_spec_example_analyzer.root"
+      input_tree: "analysis_parameters"
+      output_path: "./results/cuore_spec_example_plots/"
+      data:
+        - "signal_rate"
+    - method_name: "histo"
+      module_name: "histo"
+      title: "10mK_K40_Normalization_Distribution"
+      input_file_name: "./results/cuore_spec_example_analyzer.root"
+      input_tree: "analysis_parameters"
+      output_path: "./results/cuore_spec_example_plots/"
+      data:
+        - "background_rate_1"
+    - method_name: "histo"
+      module_name: "histo"
+      title: "10mKFlan_Th232_Normalization_Distribution"
+      input_file_name: "./results/cuore_spec_example_analyzer.root"
+      input_tree: "analysis_parameters"
+      output_path: "./results/cuore_spec_example_plots/"
+      data:
+        - "background_rate_2"
+    - method_name: "histo"
+      module_name: "histo"
+      title: "10mKFlan_U238_Normalization_Distribution"
+      input_file_name: "./results/cuore_spec_example_analyzer.root"
+      input_tree: "analysis_parameters"
+      output_path: "./results/cuore_spec_example_plots/"
+      data:
+        - "background_rate_3"
+    - method_name: aposteriori_distribution
+      module_name: histo
+      input_file_name : "./results/cuore_spec_example_analyzer.root"
+      input_tree: "analysis_parameters"
+      root_plot_option: "cont"
+      output_path: ./results/cuore_spec_example_plots/
+      title: correlation_plots
+      output_format: pdf
+      output_width: 12000
+      output_height: 11000
+      data:
+        - signal_rate
+        - background_rate_1
+        - background_rate_2
+        - background_rate_3
+    - method_name: correlation_factors
+      module_name: histo
+      input_file_name : "./results/cuore_spec_example_analyzer.root"
+      input_tree: "analysis_parameters"
+      output_path: ./results/cuore_spec_example_plots/
+      title: correlation_factors
+      output_format: pdf
+      output_width: 12000
+      output_height: 12000
+      data:
+        - signal_rate
+        - background_rate_1
+        - background_rate_2
+        - background_rate_3
+post_morpho_plots:
+  do_post_morpho_plots: False
+  do_histograms: False
+  do_correlation_plots: False
+  do_data_plots: False
+  do_print_table: False
+  plots_output_directory: "./results/cuore_spec_example_plots/"
+  plots_output_prefix: cuore_spec_example_
+    # Optional (Default=""): prefix for all files saved to the output directory
+  title_postfix: Sig=5,Back=12,Energy=1825
+    # Optioal (Default=""): text attached to the end of all plot titles
+  # histograms: Makes histograms of branches of root files. Multiple
+  # branches can be specified and plotted in the same plot
+  histograms:
+    - output_name: "sig_dist.pdf"
+      plot_title: "Stan MCMC Signal Rate Distribution"
+      x_label: "Signal"
+      y_label: "Counts per Bin"
+      print_quantile_fracs: [] # Sig
+      # leg_xstart, etc (Optional): Positioning of the legend.
+      #   Only used if at least one label is not "". Defaults
+      #   are xstart=0.7,ystart=0.75,xend=0.99,yend=0.9
+      leg_xstart: 0.7
+      leg_ystart: 0.75
+      leg_xend: 0.99
+      leg_yend: 0.9
+      print_mean_stddev: True
+        # Optional (Default=True)
+      branches:
+        - root_file_name: "./results/cuore_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "signal_rate"
+          label: "Signal Rate"
+          color: 632
+        - root_file_name: "./results/cuore_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "signal_rate_smeared"
+          label: "Signal Rate Smeared"
+          color: 600
+    - output_name: "back_dist.pdf"
+      plot_title: "Stan MCMC Background Rate Distribution"
+      x_label: "Total Background Rate"
+      y_label: "Counts per Bin"
+      print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
+      branches:
+        - root_file_name: "./results/cuore_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "background_rate"
+          color: 632
+    - output_name: "shape_0.pdf"
+      plot_title: "Stan MCMC 10mK_co60 Normalization Parameter Distribution"
+      x_label: "10mK_co60 Normalization"
+      y_label: "Counts per Bin"
+      #print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
+      branches:
+        - root_file_name: "./results/cuore_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "signal_rate"
+          color: 632
+    - output_name: "shape_1.pdf"
+      plot_title: "Stan MCMC Background 1 Rate Distribution"
+      x_label: "Background 1 Rate"
+      y_label: "Counts per Bin"
+      print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
+      branches:
+        - root_file_name: "./results/cuore_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "background_rate_1"
+          color: 632
+    - output_name: "background_2.pdf"
+      plot_title: "Stan MCMC Background 2 Rate Distribution"
+      x_label: "Background 2 Rate"
+      y_label: "Counts per Bin"
+      print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
+      branches:
+        - root_file_name: "./results/cuore_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "background_rate_2"
+          color: 632
+    - output_name: "background_3.pdf"
+      plot_title: "Stan MCMC Background 3 Rate Distribution"
+      x_label: "Background 3 Rate"
+      y_label: "Counts per Bin"
+      print_quantile_fracs: [0.025, 0.25, 0.50, 0.75, 0.975]
+      branches:
+        - root_file_name: "./results/cuore_spec_example_analyzer.root"
+          tree_name: "analysis_parameters"
+          branch_name: "background_rate_3"
+          color: 632
+  correlation_plots:
+    # Two branches (each of the same length) must be specified.
+    # A correlation plot will then be created
+    - output_name: "sig_vs_back.pdf" 
+      plot_title: "Signal vs Background Correlation Plot"
+      root_file_name_y: "./results/cuore_spec_example_analyzer.root"
+      tree_name_y: "analysis_parameters"
+      branch_name_y: "signal_rate"
+      y_label: "Extracted Signal Rate"
+      root_file_name_x: "./results/cuore_spec_example_analyzer.root"
+      tree_name_x: "analysis_parameters"
+      branch_name_x: "background_rate"
+      x_label: "Extracted Background Rate"
+  # data_plots: For each plot, one set of x points must be specified, then
+  # any number of sets of y points can be specified, and all
+  # will be saved to the same plot
+  data_plots:
+    - output_name: "data.pdf"
+      plot_title: "Stan MCMC"
+      x_label: "Energy (days)"
+      y_label: "Counts"
+      x_points_file_name: "./data/cuore_spec_example/signal_shapes.root"
+      x_points_type: "root"
+      x_points_tree_name: "10mK_co60"
+      x_points_branch_name: "energy"
+      # leg_xstart, etc (Optional): Positioning of the legend.
+      #   Only used if at least one label is not "". Defaults
+      #   are xstart=0.7,ystart=0.75,xend=0.99,yend=0.9
+      leg_xstart: 0.7
+      leg_ystart: 0.75
+      leg_xend: 0.99
+      leg_yend: 0.9
+#      y_min: 100
+#      y_max: 300
+      y_points:
+       - computed_points: "true_data"
+         curr_var: 0
+          # If computed_points="true_data", then the plotting script
+          # will use values in the preprocessing dictionary to find
+          # the expected counts for the true signal and background rates
+         color: 432
+         marker: 2
+         draw_opt: "ap3"
+         leg_opt: "L"
+          # draw_opt and leg_opt are settings for TGraphErrors
+         label: "Expected Total Counts"
+         error_bar_type: "frac_sig"
+          # Default = "none": Options are "none", "frac_sig","frac_back","frac_tot",
+          #                   "abs","poisson","extracted"
+         error_bar_val: 0.05
+       - file_name: "./data/cuore_spec_example/fake_data.out"
+         file_type: "R"
+         tree_name: "fake_data"
+           # if file_type=="R", then tree_name is the name of the variable
+         elts: []
+           # if the variable is a 2D array, then elts can be used to access
+           # one dimension. eg, elts: ["0",":"] uses the first row
+         label: "Generated Data"
+         color: 1
+         marker: 5
+         draw_opt: "P"
+         leg_opt: "P"
+         label: "Generated Data"
+         error_bar_type: "poisson"
+       - computed_points: "extracted_data"
+         signal_distribution_file: "./results/cuore_spec_example_analyzer.root"
+         signal_distribution_tree: "analysis_parameters"
+         signal_distribution_branch: "signal_rate"
+         # If there are multiple signals, the branches containing their distributions
+         # can be specified. Otherwise, the defauls from preprocessing are used
+         signal_weight_trees: []
+         signal_weight_branches: []
+         background_distribution_file: "./results/cuore_spec_example_analyzer.root"
+         background_distribution_tree: "analysis_parameters"
+         background_distribution_branch: "background_rate"
+         # If there are multiple background, the branches containing their distributions
+         # can be specified. Otherwise, the defauls from preprocessing are used
+         background_weight_trees: ["analysis_parameters","analysis_parameters"]
+         background_weight_branches: ["background_rate_1","background_rate_2"]
+         print_mean_stddev: True
+          # If computed_points="extracted_data", then the plotting script
+          # will use values in the preprocessing dictionary to find
+          # the shapes of signals and backgrounds, and it will use the
+          # specified trees to get the signal and background rates from stan
+         color: 2
+         marker: 4
+         draw_opt: "PL"
+         leg_opt: "PL"
+         label: "Extracted Fit"
+         error_bar_type: "extracted"
+  print_table:
+    do_tex_table: True
+    tex_output_name: table.tex
+    print_true_sig: True
+    print_true_back: True
+    print_range: True
+    var_range_num: 0
+    files: ["./results/cuore_spec_example_analyzer.root","./results/cuore_spec_example_analyzer.root"]
+    trees: ["analysis_parameters","analysis_parameters"]
+    branches: ["signal_rate","background_rate"]
+    print_means: [True,True]
+    print_errs: [True,True]
+    print_pcts: [True,True]
