@@ -17,7 +17,7 @@
 #
 ### The preprocessing dictionary contains inputs for pre_morpho_processing.py
 preprocessing:
-  do_preprocessing: True
+  do_preprocessing: False
   generate_shapes: True
     # Optional (Default=True): Whether shapes of signals and backgrounds should be generated
   generate_fake_data: True
@@ -50,7 +50,7 @@ preprocessing:
   signals:
     - name: "Coherent Neutrino Scattering"
         # Optional (Default='Signal_i'): Printed in debugging output and optional stored info
-      fake_data_weight: 0.0005
+      fake_data_weight: 0.00005
         # Optional (Default=1): Relative weight of this signal (or background) when generating fake data
       regenerate: True
         # Optional (Default="True"): Whether or not the shapes of this should be regenerated
@@ -78,7 +78,7 @@ preprocessing:
   ### The same parameters are used for backgrounds that are used for signals:
   backgrounds:
     - name: "10mk_k40"
-      fake_data_weight: 0.01
+      fake_data_weight: 0.001
       regenerate: True
       dimension_params:
         - type: "root_histo"
@@ -89,7 +89,7 @@ preprocessing:
           x_branch_name: "energy"
           y_branch_name: "10mK_k40"
     - name: "10mKFlan_th232"
-      fake_data_weight: 0.5
+      fake_data_weight: 0.05
       regenerate: True
       dimension_params:
         - type: "root_histo"
@@ -100,7 +100,7 @@ preprocessing:
           x_branch_name: "energy"
           y_branch_name: "10mKFlan_th232"
     - name: "10mKFlan_u238"
-      fake_data_weight: 1.0
+      fake_data_weight: 0.1
       regenerate: True
       dimension_params:
         - type: "root_histo"
@@ -115,9 +115,9 @@ preprocessing:
   fake_data_settings:
     fake_data_output_file: "data/cuore_spec_example/fake_data.out"
     fake_data_output_type: "R"
-    fake_signal_magnitude: 0.0005
+    fake_signal_magnitude: 0.00005
       # Required: Total magnitude of all signals combined when generating fake data
-    fake_background_magnitude: 1.51
+    fake_background_magnitude: 0.151
       # Required: Total magnitude of all backgrounds combined
     fake_poisson_redistribution: True
       # Optional (Default=True): Whether expected counts should be poisson distributed around actual
@@ -146,7 +146,7 @@ preprocessing:
     info_output_prefix: ""
       # Optional (Default=""): prefix of prefix_shape_info.txt, prefix_fake_data_info.txt, and stored plots
 morpho:
-  do_stan: True
+  do_stan: False
   do_postprocessing: False
   do_plots: True
 stan:
@@ -200,8 +200,10 @@ stan:
   # Run parameters
   run:
     algorithm: "NUTS"
-    iter: 54000
-    warmup: 50000
+    #iter: 54000
+    #warmup: 50000
+    iter: 5400
+    warmup: 5000
     chain: 1
     n_jobs: 1
 #    sample: "./results/cuore_spec_example_analyzer.out"
@@ -226,73 +228,109 @@ stan:
         root_alias: "background_rate_3"
 plot:
   which_plot:
-    - method_name: "histo"
-      module_name: "histo"
-      title: "10mK_Co60_Normalization_Distribution"
-      input_file_name: "./results/cuore_spec_example_analyzer.root"
-      input_tree: "analysis_parameters"
-      output_path: "./results/cuore_spec_example_plots/"
-      data:
-        - "signal_rate"
-    - method_name: "histo"
-      module_name: "histo"
-      title: "10mK_K40_Normalization_Distribution"
-      input_file_name: "./results/cuore_spec_example_analyzer.root"
-      input_tree: "analysis_parameters"
-      output_path: "./results/cuore_spec_example_plots/"
-      data:
-        - "background_rate_1"
-    - method_name: "histo"
-      module_name: "histo"
-      title: "10mKFlan_Th232_Normalization_Distribution"
-      input_file_name: "./results/cuore_spec_example_analyzer.root"
-      input_tree: "analysis_parameters"
-      output_path: "./results/cuore_spec_example_plots/"
-      data:
-        - "background_rate_2"
-    - method_name: "histo"
-      module_name: "histo"
-      title: "10mKFlan_U238_Normalization_Distribution"
-      input_file_name: "./results/cuore_spec_example_analyzer.root"
-      input_tree: "analysis_parameters"
-      output_path: "./results/cuore_spec_example_plots/"
-      data:
-        - "background_rate_3"
-    - method_name: aposteriori_distribution
-      module_name: histo
-      input_file_name : "./results/cuore_spec_example_analyzer.root"
-      input_tree: "analysis_parameters"
-      root_plot_option: "cont"
-      output_path: ./results/cuore_spec_example_plots/
-      title: correlation_plots
-      output_format: pdf
-      output_width: 12000
-      output_height: 11000
-      data:
-        - signal_rate
-        - background_rate_1
-        - background_rate_2
-        - background_rate_3
-    - method_name: correlation_factors
-      module_name: histo
-      input_file_name : "./results/cuore_spec_example_analyzer.root"
-      input_tree: "analysis_parameters"
-      output_path: ./results/cuore_spec_example_plots/
-      title: correlation_factors
-      output_format: pdf
-      output_width: 12000
-      output_height: 12000
-      data:
-        - signal_rate
-        - background_rate_1
-        - background_rate_2
-        - background_rate_3
+    - module_name : "binned_spectra"
+      method_name : "reconstructed_spectrum"
+      output_dir : "./"
+      output_path_prefix : "temp_spectrum_"
+      plot_data : True
+      make_individual_spectra : True
+      make_stacked_spectra : False
+      make_unstacked_spectra : False
+      make_data_plot : True
+      binning_file : "functions/cuore_functions/temp_binning.txt"
+      divide_by_bin_width : True
+      xlabel : "keV"
+      ylabel : "Count Per keV"
+      ylog : False
+      title_prefix : "Test "
+      data_path : "data/cuore_spec_example/fake_data.out"
+      data_format : "R counts"
+      data_var_names : ["fake_data"]
+    - module_name : "binned_spectra"
+      method_name : "reconstructed_spectrum"
+      output_dir : "./"
+      output_path_prefix : "temp_counts_"
+      plot_data : True
+      make_individual_spectra : False
+      make_stacked_spectra : False
+      make_unstacked_spectra : False
+      make_data_plot : True
+      binning_file : "functions/cuore_functions/temp_binning.txt"
+      divide_by_bin_width : False
+      xlabel : "keV"
+      ylabel : "Counts per Bin"
+      ylog : False
+      title_prefix : "Test "
+      data_path : "data/cuore_spec_example/fake_data.out"
+      data_format : "R counts"
+      data_var_names : ["fake_data"]
+#    - method_name: "histo"
+#      module_name: "histo"
+#      title: "10mK_Co60_Normalization_Distribution"
+#      input_file_name: "./results/cuore_spec_example_analyzer.root"
+#      input_tree: "analysis_parameters"
+#      output_path: "./results/cuore_spec_example_plots/"
+#      data:
+#        - "signal_rate"
+#    - method_name: "histo"
+#      module_name: "histo"
+#      title: "10mK_K40_Normalization_Distribution"
+#      input_file_name: "./results/cuore_spec_example_analyzer.root"
+#      input_tree: "analysis_parameters"
+#      output_path: "./results/cuore_spec_example_plots/"
+#      data:
+#        - "background_rate_1"
+#    - method_name: "histo"
+#      module_name: "histo"
+#      title: "10mKFlan_Th232_Normalization_Distribution"
+#      input_file_name: "./results/cuore_spec_example_analyzer.root"
+#      input_tree: "analysis_parameters"
+#      output_path: "./results/cuore_spec_example_plots/"
+#      data:
+#        - "background_rate_2"
+#    - method_name: "histo"
+#      module_name: "histo"
+#      title: "10mKFlan_U238_Normalization_Distribution"
+#      input_file_name: "./results/cuore_spec_example_analyzer.root"
+#      input_tree: "analysis_parameters"
+#      output_path: "./results/cuore_spec_example_plots/"
+#      data:
+#        - "background_rate_3"
+#    - method_name: aposteriori_distribution
+#      module_name: histo
+#      input_file_name : "./results/cuore_spec_example_analyzer.root"
+#      input_tree: "analysis_parameters"
+#      root_plot_option: "cont"
+#      output_path: ./results/cuore_spec_example_plots/
+#      title: correlation_plots
+#      output_format: pdf
+#      output_width: 12000
+#      output_height: 11000
+#      data:
+#        - signal_rate
+#        - background_rate_1
+#        - background_rate_2
+#        - background_rate_3
+#    - method_name: correlation_factors
+#      module_name: histo
+#      input_file_name : "./results/cuore_spec_example_analyzer.root"
+#      input_tree: "analysis_parameters"
+#      output_path: ./results/cuore_spec_example_plots/
+#      title: correlation_factors
+#      output_format: pdf
+#      output_width: 12000
+#      output_height: 12000
+#      data:
+#        - signal_rate
+#        - background_rate_1
+#        - background_rate_2
+#        - background_rate_3
 post_morpho_plots:
-  do_post_morpho_plots: False
-  do_histograms: False
-  do_correlation_plots: False
-  do_data_plots: False
-  do_print_table: False
+  do_post_morpho_plots: True
+  do_histograms: True
+  do_correlation_plots: True
+  do_data_plots: True
+  do_print_table: True
   plots_output_directory: "./results/cuore_spec_example_plots/"
   plots_output_prefix: cuore_spec_example_
     # Optional (Default=""): prefix for all files saved to the output directory
