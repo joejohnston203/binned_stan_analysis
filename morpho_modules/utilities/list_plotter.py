@@ -1,16 +1,17 @@
 #======================================================
-# matplotlib_plotter
+# list_plotter
 #
 # Author: J. Johnston
 # Date: Mar. 1, 2018
 #
-# Make plot with matplotlib
+# Make plots from lists
 #=======================================================
 
-"""Make plots with matplotlib
+"""Make plots from python lists
 
 Functions:
-  - mpl_plot_curves: Plot various types of curves
+  - mpl_plot_curves: Plot curves using matplotlib
+  - plot_curves: Plot curves with various plotting modules
 """
 
 import logging
@@ -31,17 +32,22 @@ def mpl_plot_curves(curves, output_path,
                     colors=['black', 'blue', 'green', 'red', 'cyan',
                             'magenta', 'yellow', 'orange', 'purple'],
                     alpha=1.0, legend_size=None):
-    """Plot a histogram using matplotlib
+    """Plot curves using matplotlib
 
     Args:
         curves: A list of 4-tuples, with each4-tuple containing
             (x_pts, y_pts, curve_type, opts)
             where possible curve_type options are, "default",
-            "histo_shaded" and "histo_line". Default simply uses
-            plt.plot to plot the given points. "histo_shaded" and
-            "histo_line" require x_pts to have length one greater than
+            "histo_shaded", "histo_line", "histo_points", and
+            "histo_error". Default simply uses
+            plt.plot to plot the given points. "histo_shaded", etc
+            require x_pts to have length one greater than
             y_pts, where x_pts define the bin edges, and y_pts specify
-            the bin contents. opts is a dictionary of plotting options,
+            the bin contents. "histo_points" also plots a point at the
+            top and center of each bin, and "histo_error" also plots
+            error bars. In that case, y_pts should be 2xN, where the first
+            row gives the y points, and the second row gives the error bar.
+            opts is a dictionary of plotting options,
             such as a legend label, and marker and line style. If "color"
             or "alpha" is defined in opts, this will override the given
             colors and alpha.
@@ -52,10 +58,11 @@ def mpl_plot_curves(curves, output_path,
         colors: Colors used to plot the curves
         alpha: Transparency of the curves
         legend_size: int giving legend size
+
+    Returns:
+        None: Stores a plot at the given path.
     """
     fig = plt.figure()
-
-    print(curves)
 
     for i,c in enumerate(curves):
         try:
@@ -132,4 +139,51 @@ def mpl_plot_curves(curves, output_path,
     plt.savefig(output_path)
     fig.clf()
     plt.close()
+    return
+
+def plot_curves(curves, output_path,
+                plotter="matplotlib",
+                xlabel="", ylabel="",title="",
+                xbounds=None, xlog=False,
+                ybounds=None, ylog=False,
+                colors=['black', 'blue', 'green', 'red', 'cyan',
+                        'magenta', 'yellow', 'orange', 'purple'],
+                alpha=1.0, legend_size=None):
+    """Plot a histogram using matplotlib
+
+    Args:
+        curves: A list of 4-tuples, with each4-tuple containing
+            (x_pts, y_pts, curve_type, opts)
+            where possible curve_type options are, "default",
+            "histo_shaded", "histo_line", "histo_points", and
+            "histo_error". Default simply uses
+            plt.plot to plot the given points. "histo_shaded", etc
+            require x_pts to have length one greater than
+            y_pts, where x_pts define the bin edges, and y_pts specify
+            the bin contents. "histo_points" also plots a point at the
+            top and center of each bin, and "histo_error" also plots
+            error bars. In that case, y_pts should be 2xN, where the first
+            row gives the y points, and the second row gives the error bar.
+            opts is a dictionary of plotting options,
+            such as a legend label, and marker and line style. If "color"
+            or "alpha" is defined in opts, this will override the given
+            colors and alpha.
+        output_path: Location to store the resulting plot
+        plotter: Specify plotter to use. Options are "matplotlib" and
+            "root" ("root" is not yet implemented).
+        xlabel, ylabel, title: Labels for the plot
+        xbounds, ybounds: 2-tuples with (lower_bound, upper_bound)
+        xlog, ylog: Whether the axis should be log scaled
+        colors: Colors used to plot the curves
+        alpha: Transparency of the curves
+        legend_size: int giving legend size
+    """
+    if plotter=="root":
+        logger.warn("root plotting not yet implemented. Using matplotlib.")
+    else:
+        # Use matplotlib
+        pass
+    mpl_plot_curves(curves, output_path, xlabel, ylabel, title,
+                    xbounds, xlog, ybounds, ylog,
+                    colors, alpha, legend_size)
     return

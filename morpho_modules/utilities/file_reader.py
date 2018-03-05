@@ -19,14 +19,86 @@ except ImportError as e:
     logger.info("ROOT could not be imported, error: %s"%e)
     logger.info("Continuing without ROOT")
 
-def read_txt_column(file_path, column):
-    return []
+def read_txt_array(file_path, idx=None):
+    """Read an array from a text file created with np.savetxt
 
-def read_root_branch(file_path, tree, branch):
-    return []
+    Args:
+        file_path: Path to the text file
+        idx: String specifying elements to return. None returns the
+            entire array. "1,2" will return the element at index (1,2).
+            "1" or "1,:" will return the second row, and ":,1" will
+            return the second column.
+
+    Returns:
+        np.array: Array with the selected column
+
+    Throws:
+        IOError: If the given file does not exist
+    """
+    result = np.loadtxt(file_path)
+
+    if idx is None:
+        return result
+    else:
+        indices = idx.split(',')
+        if len(indices)==1:
+            if indices==":":
+                return result
+            else:
+                return result[int(indices[0])]
+        elif len(indices)==2:
+            if indices[0]==":":
+                if indices[1]==":":
+                    return result
+                else:
+                    return result[:,int(indices[1])]
+            else:
+                if indices[1]==":":
+                    return result[int(indices[0]),:]
+                else:
+                    return result[int(indices[0]),
+                                  int(indices[1])]
+        else:
+            logger.error("Invalid index %s, returning full array"%idx)
+            return result
+
+def read_root_branch(file_path, tree_name, branch_name):
+    """Get a branch from a root file
+
+    Args:
+        file_path: Path to the root file
+        tree_name: Name of the tree to access
+        branch_name: Name of branch to return
+
+    Returns:
+        list: Containing all elements of the branch
+
+    Throws:
+        IOError: If the given file does not exist
+    """
+    myfile = ROOT.TFile(file_path,"READ")
+    tree = myfile.Get(tree_name)
+    result = []
+    for elt in tree:
+        result.append(getattr(elt,branch_name))
+    myfile.Close()
+    return result
 
 def read_R_variable(file_path, var_name):
-    return []
+    """Read an array from a text file created with np.savetxt
+
+    Args:
+        file_path: Path to the R file
+        var_name: Name of the variable to return
+
+    Returns:
+        Variable from R file
+
+    Throws:
+        IOError: If the given file does not exist
+    """
+    r_dict = pystan.misc.read_rdump(file_path)
+    return r_dict[var_name]
 
 def evaluate_python_fcn(xvals, module_name, fcn_name):
     return []
@@ -54,14 +126,16 @@ def get_variable_from_file(path, file_format, variable=None):
           - "text", "root": np.array containing the specified array
           - "R": Returns the specified variable (can be any type)
           - "python": python function
+
+    Throws:
+        IOError: If the given file does not exist
     """
     if file_format=="text":
         print("reading text not yet implemented")
     elif file_format=="root":
-        print("Reading root not yet implemented")
+        res_variable = read_root_branch(path, variable[0], variable[1])
     elif file_format=="R":
-        r_dict = pystan.misc.read_rdump(path)
-        res_variable = r_dict[variable]
+        res_variable = read_R_variable(path, variable)
     elif file_format=="python":
         print("reading python not yet implemented")
     else:
@@ -103,34 +177,68 @@ def get_histo_shape_from_file(binning, path, file_format, variables):
             "method_name" specifying the path to the module to load, and
             the name of the method defining the function.
     Returns:
-        A np.array specifying the number of counts in each bin described by
+        A 3-tupe containing (np.array, float64, float64).
+        np.array specifies the number of counts in each bin described by
         binning. If the format was a function, then the value for each bin
-        is the number of counts per unit x.
-    """
-    #print("binning: %s"%binning)
-    #print("path: %s"%path)
-    #print("file_format: %s"%file_format)
-    #print("variables: %s"%variables)
+        is the number of counts per unit x. The first float64 gives the
+        mean of the histogram, and the second gives the standard deviation.
 
+    Throws:
+        IOError: If the given file does not exist
+    """
     if "text" in file_format:
         print("text not yet implemented")
+        return None
     elif "root" in file_format:
-        print("root not yet implemented")
+        if "counts" in file_format or "values" in file_format:
+            res_arr = get_variable_from_file(path, "root",
+                                             [variables["tree"], variables["branches"][0]])
+        elif "function" in file_format:
+            x_arr = get_variable_from_file(path, "root",
+                                           [variables["tree"], variables["branches"][0]])
+            y_arr = get_variable_from_file(path, "root",
+                                           [variables["tree"], variables["branches"][1]])
     elif "R" in file_format:
         if "counts" in file_format or "values" in file_format:
             res_arr = get_variable_from_file(path, "R", variables["variable_names"][0])
+        elif "function" in file_format:
+            x_arr = get_variable_from_file(path, "R", variables["variable_names"][0])
+            y_arr = get_variable_from_file(path, "R", variables["variable_names"][1])
     elif "python" in file_format:
         print("python not yet implemented")
+        return None
     else:
         logger.warn("Invalid file_format given (%s), returning None")
         return None
 
+    total = 0.
+    nelts = 0
+    sigma = 0.0
+
     # For values, histogram the given array
     if "values" in file_format:
-        pass
+        average = np.mean(res_arr)
+        sigma = np.std(res_arr)
+        res_arr = np.histogram(res_arr, binning)
 
     # For a spectrum, integrate over each bin
     if "function" in file_format:
         pass
 
-    return np.array(res_arr)
+    if "counts" in file_format or "function" in file_format:
+        bin_centers = []
+        for i in range(len(binning)-1):
+            bin_centers.append(binning[i] +
+                              (binning[i+1]-binning[i])/2.0)
+        for i in range(len(res_arr)):
+            total += res_arr[i]*bin_centers[i]
+            nelts += res_arr[i]
+        average = total/float(nelts)
+        if nelts>1:
+            for i in range(len(res_arr)):
+                sigma += (bin_centers[i]-average)**2*res_arr[i]
+            sigma = np.sqrt(sigma/(nelts-1))
+        else:
+            sigma = float('inf')
+
+    return (np.array(res_arr), average, sigma)

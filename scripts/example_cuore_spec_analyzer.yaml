@@ -230,12 +230,14 @@ plot:
   which_plot:
     - module_name : "binned_spectra"
       method_name : "reconstructed_spectrum"
-      output_dir : "./"
+      output_dir : "./cuore_test/plots"
       output_path_prefix : "temp_spectrum_"
       plot_data : True
       make_individual_spectra : True
-      make_stacked_spectra : False
-      make_unstacked_spectra : False
+      make_stacked_spectra : True
+      make_unstacked_spectra : True
+      make_reconstruction_plot : True
+      make_residual_plot : True
       make_data_plot : True
       binning_file : "functions/cuore_functions/temp_binning.txt"
       divide_by_bin_width : True
@@ -246,24 +248,43 @@ plot:
       data_path : "data/cuore_spec_example/fake_data.out"
       data_format : "R counts"
       data_var_names : ["fake_data"]
-    - module_name : "binned_spectra"
-      method_name : "reconstructed_spectrum"
-      output_dir : "./"
-      output_path_prefix : "temp_counts_"
-      plot_data : True
-      make_individual_spectra : False
-      make_stacked_spectra : False
-      make_unstacked_spectra : False
-      make_data_plot : True
-      binning_file : "functions/cuore_functions/temp_binning.txt"
-      divide_by_bin_width : False
-      xlabel : "keV"
-      ylabel : "Counts per Bin"
-      ylog : False
-      title_prefix : "Test "
-      data_path : "data/cuore_spec_example/fake_data.out"
-      data_format : "R counts"
-      data_var_names : ["fake_data"]
+      parameters:
+        - name : "10mK_co60"
+          shape_path : "data/cuore_spec_example/signal_shapes.root"
+          shape_format : "root counts"
+          shape_tree : "10mK_co60"
+          shape_branches : ["cns"]
+          distribution_path : "results/cuore_spec_example_analyzer.root"
+          distribution_format : "root values"
+          distribution_tree : "analysis_parameters"
+          distribution_branches : ["signal_rate"]
+        - name : "10mK_k40"
+          shape_path : "data/cuore_spec_example/background_shapes.root"
+          shape_format : "root counts"
+          shape_tree : "10mK_k40_energy"
+          shape_branches : ["10mK_k40"]
+          distribution_path : "results/cuore_spec_example_analyzer.root"
+          distribution_format : "root values"
+          distribution_tree : "analysis_parameters"
+          distribution_branches : ["background_rate_1"]
+        - name : "10mKFlan_th232"
+          shape_path : "data/cuore_spec_example/background_shapes.root"
+          shape_format : "root counts"
+          shape_tree : "10mKFlan_th232_energy"
+          shape_branches : ["10mKFlan_th232"]
+          distribution_path : "results/cuore_spec_example_analyzer.root"
+          distribution_format : "root values"
+          distribution_tree : "analysis_parameters"
+          distribution_branches : ["background_rate_2"]
+        - name : "10mKFlan_u238"
+          shape_path : "data/cuore_spec_example/background_shapes.root"
+          shape_format : "root counts"
+          shape_tree : "10mKFlan_u238_energy"
+          shape_branches : ["10mKFlan_u238"]
+          distribution_path : "results/cuore_spec_example_analyzer.root"
+          distribution_format : "root values"
+          distribution_tree : "analysis_parameters"
+          distribution_branches : ["background_rate_3"]
 #    - method_name: "histo"
 #      module_name: "histo"
 #      title: "10mK_Co60_Normalization_Distribution"

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 import numpy as np
 
 from morpho.utilities.reader import read_param
-from morpho.utilities.matplotlib_plotter import mpl_plot_curves
+from morpho.utilities.list_plotter import plot_curves
 from morpho.utilities.file_reader import *
 
 # Implement as a processor in order to prepare for integration with morpho 2
@@ -106,7 +106,7 @@ class ReconstructSpectrumProcessor:
           - shape_var_names: R variable names (see data_var_names)
           - shape_module: Module name (see data_module)
           - shape_function: Function name (see data_function)
-          - distribution_filename: Path to file with the distribution
+          - distribution_path: Path to file with the distribution
             of the parameter fromm the sampler
           - distribution_format: Format of file with the distribution.
           - distribution_columns: Columns with the distribution
@@ -139,8 +139,8 @@ class ReconstructSpectrumProcessor:
             counts per unit x for each bin, or the total number of
             counts in each bin.
         """
-        histo = get_histo_shape_from_file(self.binning, path,
-                                          file_format, variables)
+        (histo, avg, sigma) = get_histo_shape_from_file(self.binning, path,
+                                                        file_format, variables)
         if not len(self.bin_widths)==len(histo):
             logger.warn("Histogram obtained from %s has invalid length"%path)
             logger.warn("Binning: %s"%self.binning)
@@ -155,7 +155,7 @@ class ReconstructSpectrumProcessor:
         else:
             if "function" in file_format:
                 histo = histo*self.bin_widths
-        return histo
+        return (histo, avg, sigma)
 
     def Configure(self, params):
         self.output_dir = read_param(params, 'output_dir', 'required')
@@ -165,6 +165,8 @@ class ReconstructSpectrumProcessor:
         self.individual_spectra = read_param(params, 'make_individual_spectra', True)
         self.stacked_spectra = read_param(params, 'make_stacked_spectra', True)
         self.unstacked_spectra = read_param(params, 'make_unstacked_spectra', True)
+        self.reconstruction_plot = read_param(params, 'make_reconstruction_plot', True)
+        self.residual_plot = read_param(params, 'make_residual_plot', True)
         self.make_data_plot = read_param(params, 'make_data_plot', True)
 
         self.binning_file = read_param(params, 'binning_file', None)
@@ -208,35 +210,35 @@ class ReconstructSpectrumProcessor:
             self.reconstructed_param_dicts = read_param(params, 'parameters', 'required')
             for p in self.reconstructed_param_dicts:
                 p["shape_variables"] = {}
-                if "text" in p.shape_format:
+                if "text" in p["shape_format"]:
                     p["shape_variables"]["columns"] = \
                         read_param(p, 'shape_columns', 'required')
-                if "root" in p.shape_format:
+                if "root" in p["shape_format"]:
                     p["shape_variables"]["tree"] = \
                         read_param(p, 'shape_tree', 'required')
                     p["shape_variables"]["branches"] = \
                         read_param(p, 'shape_branches', 'required')
-                if "R" in p.shape_format:
+                if "R" in p["shape_format"]:
                     p["shape_variables"]["variable_names"] = \
                         read_param(p, 'shape_var_names', 'required')
-                if "python" in p.shape_format:
+                if "python" in p["shape_format"]:
                     p["shape_variables"]["module"] = \
                         read_param(p, 'shape_module', 'required')
                     p["shape_variables"]["method_name"] = \
                         read_param(p, 'shape_function', 'required')
                 p["distribution_variables"] = {}
-                if "text" in p.distribution_format:
+                if "text" in p["distribution_format"]:
                     p["distribution_variables"]["columns"] = \
                         read_param(p, 'distribution_columns', 'required')
-                if "root" in p.distribution_format:
+                if "root" in p["distribution_format"]:
                     p["distribution_variables"]["tree"] = \
                         read_param(p, 'distribution_tree', 'required')
                     p["distribution_variables"]["branches"] = \
                         read_param(p, 'distribution_branches', 'required')
-                if "R" in p.distribution_format:
+                if "R" in p["distribution_format"]:
                     p["distribution_variables"]["variable_names"] = \
                         read_param(p, 'distribution_var_names', 'required')
-                if "python" in p.distribution_format:
+                if "python" in p["distribution_format"]:
                     p["distribution_variables"]["module"] = \
                         read_param(p, 'distribution_module', 'required')
                     p["distribution_variables"]["method_name"] = \
@@ -244,7 +246,7 @@ class ReconstructSpectrumProcessor:
 
         # Set up binnning
         try:
-            self.binning = np.loadtxt(self.binning_file)
+            self.binning = read_txt_array(self.binning_file)
         except Exception as e:
             try:
                 self.binning = np.linspace(self.xmin, self.xmax, self.n_bins+1)
@@ -264,15 +266,21 @@ class ReconstructSpectrumProcessor:
         # Get data shape
         if(self.plot_data or self.make_data_plot):
             self.data_shape = self._get_histogram(self.data_path, self.data_format,
-                                                  self.data_variables)
+                                                  self.data_variables)[0]
 
         # Get parameter shapes and distributions
         if(self.individual_spectra or self.stacked_spectra or
            self.unstacked_spectra):
             for p in self.reconstructed_param_dicts:
-                # Needs to be implemented
-                pass
-
+                p["shape"] = self._get_histogram(p["shape_path"],
+                                                 p["shape_format"],
+                                                 p["shape_variables"])[0]
+                temp_distribution = get_histo_shape_from_file([-float("inf"), float("inf")],
+                                                              p["distribution_path"],
+                                                              p["distribution_format"],
+                                                              p["distribution_variables"])
+                p["distribution_average"] = temp_distribution[1]
+                p["distribution_sigma"] = temp_distribution[2]
         return
 
     def Run(self):
@@ -280,33 +288,148 @@ class ReconstructSpectrumProcessor:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
+        if(self.divide_by_bin_width):
+            histo_plot_type = "histo_line"
+        else:
+            histo_plot_type = "histo_points"
+
         if self.make_data_plot:
-            if(self.divide_by_bin_width):
-                data_curve = (self.binning, self.data_shape, "histo_line",
-                              {})
-            else:
-                data_curve = (self.binning, self.data_shape, "histo_points",
-                              {})
+            data_curve = (self.binning, self.data_shape, histo_plot_type, {})
             output_path = self.output_dir + "/" + \
                           self.output_path_prefix + "data.png"
             plot_args = {"alpha":1.0}
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
-            mpl_plot_curves([data_curve], output_path,
+            plot_curves([data_curve], output_path, "matplotlib",
+                        xlabel=self.xlabel, ylabel=self.ylabel,
+                        title="Data",
+                        xlog=self.xlog, ylog=self.ylog,
+                        **plot_args)
+
+        if self.individual_spectra:
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            for i,p in enumerate(self.reconstructed_param_dicts):
+                curves = []
+                if self.plot_data:
+                    curves.append((self.binning, self.data_shape,
+                                   histo_plot_type, {"label":"Data"}))
+                curves.append((self.binning,
+                               p["distribution_average"]*p["shape"],
+                               histo_plot_type, {"label":p["name"]}))
+                output_path = self.output_dir + "/" + \
+                              self.output_path_prefix + "%s.png"%p["name"]
+                plot_args = {}
+                if not self.ybounds=="auto":
+                    plot_args['ybounds'] = self.ybounds
+                plot_curves(curves, output_path, plotter="matplotlib",
                             xlabel=self.xlabel, ylabel=self.ylabel,
-                            title="Data",
+                            title="Spectrum %s"%p["name"],
                             xlog=self.xlog, ylog=self.ylog,
                             **plot_args)
 
-        if self.individual_spectra:
-            pass
-
         if self.stacked_spectra:
-            pass
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            curves = []
+            total = np.zeros(len(self.binning)-1)
+            for i,p in enumerate(self.reconstructed_param_dicts):
+                total += p["distribution_average"]*p["shape"]
+                curves = [(self.binning, copy.deepcopy(total),
+                          "histo_shaded",
+                           {"label":p["name"]})] + \
+                          curves
+            if self.plot_data:
+                curves.append((self.binning, self.data_shape,
+                               "histo_line",
+                               {"label":"Data", "color":"black", "linewidth":2, "alpha":1}))
+            output_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "stacked_spectra.png"
+            plot_args = {"alpha":0.5}
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            plot_curves(curves, output_path, plotter="matplotlib",
+                        xlabel=self.xlabel, ylabel=self.ylabel,
+                        title="Stacked Spectra",
+                        xlog=self.xlog, ylog=self.ylog,
+                        **plot_args)
 
         if self.unstacked_spectra:
-            pass
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            curves = []
+            for i,p in enumerate(self.reconstructed_param_dicts):
+                curves = [(self.binning,
+                           p["distribution_average"]*p["shape"],
+                          "histo_shaded",
+                           {"label":p["name"]})] + \
+                          curves
+            if self.plot_data:
+                curves.append((self.binning, self.data_shape,
+                               "histo_line",
+                               {"label":"Data", "color":"black", "linewidth":2, "alpha":1}))
+            output_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "unstacked_spectra.png"
+            plot_args = {"alpha":0.5}
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            plot_curves(curves, output_path, plotter="matplotlib",
+                        xlabel=self.xlabel, ylabel=self.ylabel,
+                        title="Unstacked Spectra",
+                        xlog=self.xlog, ylog=self.ylog,
+                        **plot_args)
 
+        if self.reconstruction_plot:
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            curves = []
+            total = np.zeros(len(self.binning)-1)
+            for i,p in enumerate(self.reconstructed_param_dicts):
+                total += p["distribution_average"]*p["shape"]
+            curves.append((self.binning, total,
+                           "histo_line",
+                           {"label":"Reconstructed Spectrum"}))
+            if self.plot_data:
+                curves.append((self.binning, self.data_shape,
+                               "histo_line",
+                               {"label":"Data"}))
+            output_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "reconstruction.png"
+            plot_args = {"alpha":0.5}
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            plot_curves(curves, output_path, plotter="matplotlib",
+                        xlabel=self.xlabel, ylabel=self.ylabel,
+                        title="Reconstructed Spectrum",
+                        xlog=self.xlog, ylog=self.ylog,
+                        **plot_args)
+
+        if self.residual_plot:
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            curves = []
+            total = np.zeros(len(self.binning)-1)
+            for i,p in enumerate(self.reconstructed_param_dicts):
+                total += p["distribution_average"]*p["shape"]
+            curves.append((self.binning, total,
+                           "histo_line",
+                           {"label":"Reconstructed Spectrum"}))
+            if self.plot_data:
+                curves.append((self.binning, self.data_shape,
+                               "histo_line",
+                               {"label":"Data"}))
+            curves.append((self.binning,(self.data_shape-total),
+                           "histo_line", {"label":"Residual (Exp-Stan)"}))
+            output_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "reconstruction.png"
+            plot_args = {"alpha":0.5}
+            if not self.ybounds=="auto":
+                plot_args['ybounds'] = self.ybounds
+            plot_curves(curves, output_path, plotter="matplotlib",
+                        xlabel=self.xlabel, ylabel=self.ylabel,
+                        title="Reconstructed Spectrum",
+                        xlog=self.xlog, ylog=self.ylog,
+                        **plot_args)
         return
 
 
