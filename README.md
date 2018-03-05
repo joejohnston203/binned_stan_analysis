@@ -5,11 +5,13 @@ The frequentist_analysis folder contains a python program to perform a frequenti
 Requirements
 ======
 
-  Designed to work with version 1.1.5 of morpho. https://github.com/project8/morpho/tree/v1.1.5
+  Designed to work with version 1.4.1 of morpho. https://github.com/project8/morpho/tree/v1.4.1
   
   You will need to install root in order to have access to pyroot.
 
   If you want to use the given example analysis, update activate_venv.sh to point to your virtualenv directory where morpho was installed.
+
+  The files from morpho_modules need to be copied into morpho/morpho in the morpho installation.
   
 Directory Structure
 ======
@@ -61,6 +63,11 @@ Directory Structure
     magnitudes.
 
   The following directory should not be altered when creating new models:
+
+  morpho_modules
+
+    These modules will be copied into the morpho/morpo directory where morpho
+    was installed. They can then be accessed and loaded by morpho.
 
   python_scripts
   

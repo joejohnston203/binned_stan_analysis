@@ -10,6 +10,9 @@
 
 """Make plots relevant to a binned spectrum analysis
 
+Classes:
+  - ReconstructSpectrumProcessor: Class to plot reconstruction
+
 Functions:
   - reconstructed_spectrum: Plot reconstruction with stan parameters
 """
@@ -30,7 +33,7 @@ from morpho.utilities.file_reader import *
 class ReconstructSpectrumProcessor:
     """Create a spectrum reconstructed from stan parameters
 
-    param_dict is constructed from plot.which_plot in the yaml
+    params is constructed from plot.which_plot in the yaml
     file used to configure morpho. 
 
     Args:
@@ -115,47 +118,12 @@ class ReconstructSpectrumProcessor:
           - distribution_var_names: R variable names
 
     Returns:
-        None: Stores a plot of the reconstructed spectrum
+        None: Run() stores a plot of the reconstructed spectrum
     """
 
     def __init__(self, name, *args, **kwargs):
         self.__name = name
         return
-
-    def _get_histogram(self, path, file_format, variables):
-        """Get a histogram from file, with the correct y axis
-
-        If divide_by_bin_width is True, then we want histograms where
-        the y axis is the number of counts per unit x. If False, then
-        we want total number of counts as the y axis. This method
-        uses the given path, file_format, and variables to get the
-        histogram, then modifies it to have the correct y axis.
-
-        Args:
-            See morpho.file_reader.get_histo_shape_from_file docstring
-
-        Returns:
-            list of length (len(binning)-1), specifying either the
-            counts per unit x for each bin, or the total number of
-            counts in each bin.
-        """
-        (histo, avg, sigma) = get_histo_shape_from_file(self.binning, path,
-                                                        file_format, variables)
-        if not len(self.bin_widths)==len(histo):
-            logger.warn("Histogram obtained from %s has invalid length"%path)
-            logger.warn("Binning: %s"%self.binning)
-            logger.warn("Bin widths: %s"%self.bin_width)
-            logger.warn("Histogram: %s"%histo)
-            logger.warn("Returning histogram")
-            return histo
-
-        if self.divide_by_bin_width:
-            if "counts" in file_format or "values" in file_format:
-                histo = histo/self.bin_widths
-        else:
-            if "function" in file_format:
-                histo = histo*self.bin_widths
-        return (histo, avg, sigma)
 
     def Configure(self, params):
         self.output_dir = read_param(params, 'output_dir', 'required')
@@ -282,6 +250,41 @@ class ReconstructSpectrumProcessor:
                 p["distribution_average"] = temp_distribution[1]
                 p["distribution_sigma"] = temp_distribution[2]
         return
+
+    def _get_histogram(self, path, file_format, variables):
+        """Get a histogram from file, with the correct y axis
+
+        If divide_by_bin_width is True, then we want histograms where
+        the y axis is the number of counts per unit x. If False, then
+        we want total number of counts as the y axis. This method
+        uses the given path, file_format, and variables to get the
+        histogram, then modifies it to have the correct y axis.
+
+        Args:
+            See morpho.file_reader.get_histo_shape_from_file docstring
+
+        Returns:
+            list of length (len(binning)-1), specifying either the
+            counts per unit x for each bin, or the total number of
+            counts in each bin.
+        """
+        (histo, avg, sigma) = get_histo_shape_from_file(self.binning, path,
+                                                        file_format, variables)
+        if not len(self.bin_widths)==len(histo):
+            logger.warn("Histogram obtained from %s has invalid length"%path)
+            logger.warn("Binning: %s"%self.binning)
+            logger.warn("Bin widths: %s"%self.bin_width)
+            logger.warn("Histogram: %s"%histo)
+            logger.warn("Returning histogram")
+            return histo
+
+        if self.divide_by_bin_width:
+            if "counts" in file_format or "values" in file_format:
+                histo = histo/self.bin_widths
+        else:
+            if "function" in file_format:
+                histo = histo*self.bin_widths
+        return (histo, avg, sigma)
 
     def Run(self):
         """Create the plots"""
@@ -446,9 +449,7 @@ def reconstructed_spectrum(param_dict):
     Returns:
         None: Stores a plot of the reconstructed spectrum
     """
-
     proc = ReconstructSpectrumProcessor("reconstructed_spectrum_plotter")
     proc.Configure(param_dict)
     proc.Run()
     return
-
