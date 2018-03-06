@@ -18,7 +18,11 @@ Classes:
   - GenerateShapesProcessor: Class to create and store shapes
 
 Functions:
+  - binning_algorithm_default: Determine binning from data
   - generate_shapes: Create and store shapes
+
+ToDo:
+  - Add the option to output debugging plots
 """
 
 import logging
@@ -49,6 +53,9 @@ class GenerateShapesProcessor:
             (required)
         output_format: Format for output shapes. Options are
             "text", "root", or "R".
+
+        debug_dir: String specifying directory to store debug text
+            and plots. Set to "" to not output debug info. (Default="")
 
         dimensions: List of dictionaries, with one dictionary for each
             dimension of the analysis (eg "energy" and "time"). (required).
@@ -92,12 +99,20 @@ class GenerateShapesProcessor:
             parameters that shapes should be generated for. (required).
             Each dictionary should contain the following keys:
           - name: Name of the parameter (used in saving shapes)
-          - regnerate: Boolean specifying whether this shape should be
+          - regenerate: Boolean specifying whether this shape should be
             generated.
           - shapes: List of dictionaries, with one dictionary for each
             dimension defined above. Each dictionary should contain
             the following keys:
               - path: Path to the file containing the shape
+              - renormalize: Boolean specifying whether the shape should
+                be renormalized to 1 (Default=False)
+              - multiply_shape: Float that multiplies the shape. If
+                renormalize is True, then the shape is multiplied after
+                it is renormalized to 1. (Default=1.0)
+              - number_save_type: String specifying way to save number,
+                from numpy data types (eg 'int64' or 'float64').
+                (Default='float64').
               - format: Format of the file containing the shape.
                 options are "text values", "text counts", "text function",
                 "root values", "root counts", "root function", "R values",
@@ -127,16 +142,19 @@ class GenerateShapesProcessor:
         outputs are stored in the given output_dir. 
         If output_format=="text", then the binning is stored in text files
         output_path_prefix+"binning_"+name+".txt" and the 
-        shapes are stored in output_path_prefix+name+".txt",
+        shapes are stored in
+        output_path_prefix+param_name+"_"+dimension_name+".txt",
         where name is the dimension or parameter name.
         If output_format=="root", then the binnings are stored in
-        output_path_prefix+"binnings.root" and shapes are stored in
-        output_path_prefix+"shapes.root". The tree and branch name
-        are equal to the name of the current dimension or parameter.
+        output_path_prefix+"binnings.root", with tree and branch equal
+        to the name of the current dimension. Shapes are stored in
+        output_path_prefix+"shapes.root", with tree and branch name
+        equal to the param_name+"_"+dimension_name.
         If output_format=="R", then the binnings are in the file
-        output_path_prefix+"binnings.out", and the shapes are in the file
+        output_path_prefix+"binnings.out" with variable name given by
+        the dimension name, and the shapes are in the file
         output_path_prefix+"shapes.out", with the variable names given by
-        the dimension and parameter names.
+        param_name+"_"+dimension_name.
     """
     def __init__(self, name, *args, **kwargs):
         self.__name = name
@@ -156,6 +174,9 @@ class GenerateShapesProcessor:
             logger.warn("Invalid output format %s"%self.output_format)
             logger.warn("Using R")
             self.output_format = "R"
+
+        self.debug_dir = read_param(params, 'debug_dir', "")
+        self.save_debug = (not self.debug_dir=="")
 
         self.dimensions = read_param(params, 'dimensions', 'required')
         self.parameters = read_param(params, 'parameters', 'required')
@@ -180,12 +201,14 @@ class GenerateShapesProcessor:
                 logger.error("Not generating shapes")
                 self.generate_shapes = False
                 return
-            print(d)
 
         for p in self.parameters:
             read_param(p, 'name', 'required')
             for s in read_param(p, 'shapes', 'required'):
                 read_param(s, 'path', 'required')
+                s["renormalize"] = read_param(s, 'renormalize', False)
+                s["multiply_shape"] = read_param(s, 'multiply_shape', 1.0)
+                s["number_save_type"] = read_param(s, 'number_save_type', 'float64')
                 param_format = read_param(s, 'format', 'required')
                 s["variables"] = {}
                 if "text" in param_format:
@@ -209,12 +232,13 @@ class GenerateShapesProcessor:
 
     def Run(self):
         if not self.generate_shapes:
+            logger.info("Not generating shapes because generate_shapes==False")
             return
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-        # Set up binning
-        self.binning = list()
+        logger.info("Generating and storing binnings")
+        self.binnings = list()
         for d in self.dimensions:
             binning_type = read_param(d, 'binning_type', 'required')
             if binning_type=="file":
@@ -223,13 +247,13 @@ class GenerateShapesProcessor:
                 binning_variables = d["binning_variables"]
                 binning = get_variable_from_file(binning_path, binning_format,
                                                  binning_variables)
-                self.binning.append(np.array(binning))
+                self.binnings.append(np.array(binning))
             elif binning_type=="uniform":
                 n_bins = read_param(d, 'n_bins', 'required')
                 lb = read_param(d, 'lower_bound', 'required')
                 ub = read_param(d, 'upper_bound', 'required')
                 binning = np.linspace(lb, ub, n_bins+1, endpoint=True)
-                self.binning.append(binning)
+                self.binnings.append(binning)
             elif binning_type=="algorithm":
                 binning_algorithm = read_param(d, 'binning_algorithm', "default")
                 if not binning_algorithm=="default":
@@ -241,30 +265,85 @@ class GenerateShapesProcessor:
                 data_variables = read_param(d, 'binning_data_variables', None)
                 data = get_variable_from_file(data_path, data_format,
                                               data_variables)
-                self.binning.append(binning_algorithm_default(lb, ub, data, None))
+                self.binnings.append(binning_algorithm_default(lb, ub, data, None))
+            d_name = read_param(d, 'name', 'required')
             if self.output_format=="text":
                 binning_output_path = self.output_dir + "/" + \
                                       self.output_path_prefix + \
                                       "binning_" + \
-                                      read_param(d, 'name', 'required') + ".txt"
+                                      d_name + ".txt"
                 binning_var_name = None
             elif self.output_format=="root":
                 binning_output_path = self.output_dir + "/" + \
                                       self.output_path_prefix + \
                                       "binnings.root"
-                binning_var_name = [read_param(d, 'name', 'required'),
-                                    read_param(d, 'name', 'required')]
+                binning_var_name = [d_name, d_name]
             else:
                 binning_output_path = self.output_dir + "/" + \
                                       self.output_path_prefix + \
                                       "binnings.out"
-                binning_var_name = read_param(d, 'name', 'required')
+                binning_var_name = d_name
             write_variable_to_file(binning_output_path, self.output_format,
-                                   self.binning[-1],
+                                   self.binnings[-1],
                                    binning_var_name, False)
+            logger.info("\tBinning for dimension %s stored at %s"%
+                        (d_name, binning_output_path))
 
-        for s in self.parameters:
-            pass
+        logger.info("Generating and storing parameter shapes")
+        self.param_shapes = []
+        for p in self.parameters:
+            p_name = read_param(p, 'name', 'required')
+            if not read_param(p, 'regenerate', True):
+                logger.info("Skipping shape %s"%p_name)
+                continue
+
+            shapes = []
+            for i,s in enumerate(read_param(p, 'shapes', 'required')):
+                curr_shape = get_histo_shape_from_file(self.binnings[i],
+                                                        read_param(s, 'path', 'required'),
+                                                        read_param(s, 'format', 'required'),
+                                                        read_param(s, 'variables', 'required'))[0]
+                if s["renormalize"]:
+                    curr_shape = curr_shape.astype('float64')/float(np.sum(curr_shape))
+                curr_shape = curr_shape.astype('float64')*float(s["multiply_shape"])
+                shapes.append(curr_shape.astype(s["number_save_type"]))
+            self.param_shapes.append(shapes)
+
+            if self.output_format=="text":
+                for i in range(len(shapes)):
+                    shape_output_path = self.output_dir + "/" + \
+                                        self.output_path_prefix + \
+                                        p_name + "_" + \
+                                        self.dimensions[i]["name"] + ".txt"
+                    shape_var_name = None
+                    write_variable_to_file(shape_output_path, self.output_format,
+                                           shapes[i],
+                                           shape_var_name, False)
+                    logger.info("\tShape for parameter %s, dimension %s stored at %s"%
+                                (p_name, self.dimensions[i]["name"], shape_output_path))
+            elif self.output_format=="root":
+                shape_output_path = self.output_dir + "/" + \
+                                    self.output_path_prefix + \
+                                    "shapes.root"
+                for i in range(len(shapes)):
+                    tree_name = p_name + "_" + self.dimensions[i]["name"]
+                    branch_names = [tree_name]
+                    arrs = [shapes[i]]
+                    write_root_branches(shape_output_path, tree_name,
+                                        branch_names, arrs, False)
+                logger.info("\tShapes for parameter %s stored at %s"%
+                            (p_name, shape_output_path))
+            else:
+                shape_output_path = self.output_dir + "/" + \
+                                    self.output_path_prefix + \
+                                    "shapes.out"
+                for i in range(len(shapes)):
+                    shape_var_name = p_name + "_" + \
+                                     self.dimensions[i]["name"]
+                    write_variable_to_file(shape_output_path, self.output_format,
+                                           shapes[i], shape_var_name, False)
+                logger.info("\tShapes for parameter %s stored at %s"%
+                            (p_name, shape_output_path))
         return
 
 def binning_algorithm_default(lb, ub, data, args):
@@ -276,9 +355,9 @@ def binning_algorithm_default(lb, ub, data, args):
             binning
         args: Other arguments (will be expanded later)
     """
-    print("binning data = %s"%data)
-    print("binning algorithm not yet implemented")
-    return []
+    logger.warn("binning algorithm not yet implemented")
+    logger.warn("Using 20 uniform bins between %s, %s"%(lb,ub))
+    return np.linspace(lb, ub, 21, endpoint=True)
 
 def generate_shapes(param_dict):
     """Generates and stores binned spectra shapes

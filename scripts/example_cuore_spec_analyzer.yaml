@@ -147,8 +147,45 @@ preprocessing:
       # Optional (Default=""): prefix of prefix_shape_info.txt, prefix_fake_data_info.txt, and stored plots
 morpho:
   do_stan: False
+  do_preprocessing: True
   do_postprocessing: False
-  do_plots: True
+  do_plots: False
+preprocessing:
+  which_pp:
+    - module_name : "binned_shapes"
+      method_name : "generate_shapes"
+      generate_shapes : True
+      output_dir : "cuore_test/shapes"
+      output_path_prefix : "test_"
+      output_format : "R"
+      dimensions:
+        - name : "energy"
+          binning_type : "file"
+          binning_path : "functions/cuore_functions/temp_binning.txt"
+          binning_format : "text"
+          binning_variables : ":"
+        - name : "energy2"
+          binning_type : "uniform"
+          lower_bound : 0
+          upper_bound : 100.0
+          n_bins : 55
+      parameters:
+        - name : "p_10mK_co60"
+          regenerate : True
+          shapes :
+            - path : "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
+              renormalize : True
+              #multiply_shape : 1.0
+              #number_save_type : 'float64'
+              format : "root values"
+              tree : "outTree"
+              branches : ["Ener2"]
+            - path : "data/cuore_spec_example/signal_shapes.root"
+              format : "root counts"
+              tree : "10mK_co60"
+              branches : ["cns"]
+#    - module_name: "binned_fake_data"
+#      method_name: "binned_fake_data"
 stan:
   # Name of the model
   name: "binned_data_analysis_1D_3back" # Stan
