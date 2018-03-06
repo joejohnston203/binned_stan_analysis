@@ -96,8 +96,12 @@ class ReconstructSpectrumProcessor:
         data_var_names: Variable names in the "R" file. (See data_columns).
             Required if format includes "R".
         data_module: Module where the python function will be found.
-            Required if format includes "python".
+            Required if format includes "python". In this case, data_path
+            specifies the the path to the directory where the module is
+            located.
         data_function: Function name. Required if format includes "python".
+        data_function_options: Dictionary with any named arguments to pass
+            to the function. (Default={})
 
         parameters: Array of dictionaries containing the following keys
           - shape_path: Path to the file where the shape is stored
@@ -109,9 +113,11 @@ class ReconstructSpectrumProcessor:
           - shape_var_names: R variable names (see data_var_names)
           - shape_module: Module name (see data_module)
           - shape_function: Function name (see data_function)
+          - shape_function_options: Options (see data_function_options)
           - distribution_path: Path to file with the distribution
             of the parameter fromm the sampler
           - distribution_format: Format of file with the distribution.
+            Note that "function" is not implemented for distributions.
           - distribution_columns: Columns with the distribution
           - distribution_tree: Root tree used to access distribution
           - distribution_branches: Root branches used to access distribution
@@ -168,10 +174,13 @@ class ReconstructSpectrumProcessor:
                 self.data_variables["variable_names"] = \
                     read_param(params, 'data_var_names', 'required')
             if "python" in self.data_format:
+                self.data_variables["path"] = self.data_path
                 self.data_variables["module"] = \
                     read_param(params, 'data_module', 'required')
                 self.data_variables["method_name"] = \
                     read_param(params, 'data_function', 'required')
+                self.data_variables["method_options"] = \
+                    read_param(params, 'data_function_options', 'required')
 
         if(self.individual_spectra or self.stacked_spectra or
            self.unstacked_spectra):
@@ -190,10 +199,13 @@ class ReconstructSpectrumProcessor:
                     p["shape_variables"]["variable_names"] = \
                         read_param(p, 'shape_var_names', 'required')
                 if "python" in p["shape_format"]:
+                    p["shape_variables"]["path"] = p["shape_path"]
                     p["shape_variables"]["module"] = \
                         read_param(p, 'shape_module', 'required')
                     p["shape_variables"]["method_name"] = \
                         read_param(p, 'shape_function', 'required')
+                    p["shape_variables"]["method_options"] = \
+                        read_param(p, 'shape_function_options', 'required')
                 p["distribution_variables"] = {}
                 if "text" in p["distribution_format"]:
                     p["distribution_variables"]["columns"] = \
@@ -207,10 +219,13 @@ class ReconstructSpectrumProcessor:
                     p["distribution_variables"]["variable_names"] = \
                         read_param(p, 'distribution_var_names', 'required')
                 if "python" in p["distribution_format"]:
+                    p["distribution_variables"]["path"] = p["distribution_path"]
                     p["distribution_variables"]["module"] = \
                         read_param(p, 'distribution_module', 'required')
                     p["distribution_variables"]["method_name"] = \
                         read_param(p, 'distribution_function', 'required')
+                    p["distribution_variables"]["method_options"] = \
+                        read_param(p, 'distribution_function_options', 'required')
 
         # Set up binnning
         try:
@@ -243,6 +258,10 @@ class ReconstructSpectrumProcessor:
                 p["shape"] = self._get_histogram(p["shape_path"],
                                                  p["shape_format"],
                                                  p["shape_variables"])[0]
+                if "function" in p["distribution_format"]:
+                    logger.error("Format %s invalid, function not implemented for distributions"
+                                 %p["distribution_format"])
+                    logger.error("Distribution mean and average will not be accurate")
                 temp_distribution = get_histo_shape_from_file([-float("inf"), float("inf")],
                                                               p["distribution_path"],
                                                               p["distribution_format"],

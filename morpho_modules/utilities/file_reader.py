@@ -7,8 +7,23 @@
 # Read data from different file types
 #=======================================================
 
+"""Read data from files
+
+Functions:
+  - read_txt_array: Read an array stored with np.savetxt
+  - read_root_branch: Read a branch from a root file
+  - histogram_root_branch: Generate histogram from a root branch
+  - read_R_variable: Read a variable from a R file
+  - evalute_python_fcn: Evaluate a python function for given values
+  - get_variable_from_file: Get a variable from various file types
+  - get_histo_shape_from_file: Get a histogram from a file
+"""
+
 import logging
 logger = logging.getLogger(__name__)
+
+import sys
+from importlib import import_module
 
 import numpy as np
 import pystan
@@ -131,8 +146,12 @@ def read_R_variable(file_path, var_name):
     r_dict = pystan.misc.read_rdump(file_path)
     return r_dict[var_name]
 
-def evaluate_python_fcn(xvals, module_name, fcn_name):
-    return []
+def evaluate_python_fcn(xvals, path, module_name, fcn_name, options={}):
+    sys.path.append(path)
+    temp_module = import_module(module_name)
+    fcn=getattr(temp_module,fcn_name)
+    fcn = np.vectorize(fcn)
+    return fcn(np.array(xvals), **options)
 
 def get_variable_from_file(path, file_format, variable=None):
     """Get a variable from file
@@ -140,7 +159,7 @@ def get_variable_from_file(path, file_format, variable=None):
     Args:
         path: Path to the file
         file_format: Format of the file. Options are "text",
-            "root", "R", or "python"
+            "root", or "R"
         variable: Variable to access. The form depends on the file
             format:
           - "text": The file will be loaded with np.loadtxt. Pass a
@@ -169,8 +188,6 @@ def get_variable_from_file(path, file_format, variable=None):
         res_variable = read_root_branch(path, variable[0], variable[1])
     elif file_format=="R":
         res_variable = read_R_variable(path, variable)
-    elif file_format=="python":
-        print("reading python not yet implemented")
     else:
         logger.warn("Invalid file_format. Returning None")
         res_variable = None
@@ -194,7 +211,9 @@ def get_histo_shape_from_file(binning, path, file_format, variables,
             in each bin will be specified (assuming bins from binning_file
             or n_bins). "function" specifies that there will be two columns
             of points defining the spectrum, which will then be integrated
-            in each bin.
+            in each bin. The points defining the spectrum must be denser
+            than the binning. The average value in each bin will be
+            returned.
         variables: Dictionary containing the variables used to access
             the data. The formatting depends on the file format:
           - "text":  variables should contain a key "columns" specifying
@@ -208,9 +227,11 @@ def get_histo_shape_from_file(binning, path, file_format, variables,
           - "R": variables should contain a key "variable_names" with
             a list of variable names (one for "values" or "counts", two
             for "function".
-          - "python": variables should contain a key "module" and a key
-            "method_name" specifying the path to the module to load, and
-            the name of the method defining the function.
+          - "python": variables should contain a key "path", a key "module"
+            and a key "method_name" specifying the path to the module to load,
+            and the name of the method defining the function. It may also
+            contain a key "method_options", which contains a dictionary
+            with named arguments to pass the method.
         get_mean_sigma: Whether the mean and sigma should be calculated.
             0 is returned for both if set to False. (Default True).
     Returns:
@@ -242,10 +263,18 @@ def get_histo_shape_from_file(binning, path, file_format, variables,
             x_arr = get_variable_from_file(path, "R", variables["variable_names"][0])
             y_arr = get_variable_from_file(path, "R", variables["variable_names"][1])
     elif "python" in file_format:
-        print("python not yet implemented")
-        return None
+        if not "function" in file_format:
+            logger.error("file_format %s is invalid, assuming 'python function'")
+            file_format = "python function"
+        x_arr = np.linspace(binning[0], binning[-1],
+                            50*(len(binning)-1), endpoint=False)
+        if not "method_options" in variables:
+            variables["method_options"] = {}
+        y_arr = evaluate_python_fcn(x_arr, variables["path"],
+                                    variables["module"], variables["method_name"],
+                                    variables["method_options"])
     else:
-        logger.warn("Invalid file_format given (%s), returning None")
+        logger.error("Invalid file_format given (%s), returning None"%file_format)
         return None
 
     average = 0.
@@ -260,7 +289,16 @@ def get_histo_shape_from_file(binning, path, file_format, variables,
 
     # For a spectrum, integrate over each bin
     if "function" in file_format:
-        pass
+        if not len(x_arr)==len(y_arr):
+            logger.error("x and y arrays have different lengths. Returning None")
+            return None
+        bin_counts = np.histogram(x_arr, binning)[0]
+        bin_total = np.histogram(x_arr, binning, weights=y_arr)[0]
+        bin_avg = bin_total.astype('float64')/bin_counts.astype('float64')
+        bin_widths = []
+        for i in range(len(binning)-1):
+            bin_widths.append(binning[i+1]-binning[i])
+        res_arr = bin_avg*np.array(bin_widths)
 
     if "counts" in file_format or "function" in file_format:
         if not len(binning)-1==len(res_arr):

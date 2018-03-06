@@ -164,13 +164,13 @@ preprocessing:
           binning_path : "functions/cuore_functions/temp_binning.txt"
           binning_format : "text"
           binning_variables : ":"
-        - name : "energy2"
-          binning_type : "uniform"
+        - name : "time"
+          binning_type: "uniform"
           lower_bound : 0
-          upper_bound : 100.0
-          n_bins : 55
+          upper_bound : 365
+          n_bins : 5
       parameters:
-        - name : "p_10mK_co60"
+        - name : "p_10mKFlan_u238"
           regenerate : True
           shapes :
             - path : "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
@@ -180,11 +180,30 @@ preprocessing:
               format : "root values"
               tree : "outTree"
               branches : ["Ener2"]
-            - path : "data/cuore_spec_example/signal_shapes.root"
-              format : "root counts"
-              tree : "10mK_co60"
-              branches : ["cns"]
-#    - module_name: "binned_fake_data"
+            - format : "python function"
+              path : "ric_functions"
+              module : "ric_shapefunctions"
+              function : "cns_time_very_simple"
+              function_options:
+                frac : 0.6
+        - name : "p_10mKFlan_th232"
+          regenerate : True
+          shapes :
+            - path : "functions/cuore_functions/root_files/10mKFlan-th232_cnaf103.root"
+              renormalize : True
+              #multiply_shape : 1.0
+              #number_save_type : 'float64'
+              format : "root values"
+              tree : "outTree"
+              branches : ["Ener2"]
+            - format : "python function"
+              path : "ric_functions"
+              module : "ric_shapefunctions"
+              function : "cns_time_very_simple"
+              function_options:
+                frac : 0.6
+
+#- module_name: "binned_fake_data"
 #      method_name: "binned_fake_data"
 stan:
   # Name of the model

@@ -134,8 +134,12 @@ class GenerateShapesProcessor:
               - var_names: Variable names in the "R" file. (See columns).
                 Required if format includes "R".
               - module: Module where the python function will be found.
-                Required if format includes "python".
+                Required if format includes "python". In this case, path
+                should specify the path to the directory where the module
+                is located.
               - function: Function name. Required if format includes "python".
+              - function_options: Dictionary with any named arguments to pass to
+                the function. (Default={})
 
     Returns:
         None: Run() stores the binning and generated shapes to file. All
@@ -223,10 +227,13 @@ class GenerateShapesProcessor:
                     s["variables"]["variable_names"] = \
                         read_param(s, 'var_names', 'required')
                 if "python" in param_format:
+                    s["variables"]["path"] = s["path"]
                     s["variables"]["module"] = \
                         read_param(s, 'module', 'required')
                     s["variables"]["method_name"] = \
                         read_param(s, 'function', 'required')
+                    s["variables"]["method_options"] = \
+                        read_param(s, 'function_options', {})
 
         return
 

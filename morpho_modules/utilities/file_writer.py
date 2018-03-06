@@ -7,6 +7,15 @@
 # Write data to different file types
 #=======================================================
 
+"""Write data to file
+
+Functions:
+  - write_txt_array: Write a 1D or 2D array to a text file
+  - write_root_branch: Write lists to a root tree
+  - write_R_variable: Write data to an R file
+  - write_variable_to_file: Write data to various file types
+"""
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -51,7 +60,10 @@ def write_root_branches(file_path, tree_name, branch_names, arrs,
 
     Args:
         file_path: Path to the root file
-        tree_name: Name of the tree to store in
+        tree_name: Name of the tree to store in. Should not start with
+            a number, or else it cannot be opened in interactive
+            sessions. Also, do not use names like "time" that are
+            already defined in root.
         branch_names: List of branches to write
         arrs: List of arrays to save to the branches. All arrays must
             have the same length. Also, len(branch_names)==len(arrs).
@@ -94,7 +106,8 @@ def write_R_variable(file_path, var_name, variable,
 
     Args:
         file_path: Path to the R file
-        var_name: Name to store the variable under
+        var_name: Name to store the variable under. Cannot start with
+            a number, and cannot contain '-'.
         variable: Variable to store
         recreate: Whether the R file should be overwritten
 

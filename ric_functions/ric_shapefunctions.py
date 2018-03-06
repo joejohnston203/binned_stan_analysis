@@ -259,3 +259,12 @@ def cns_time_simple(time_days,params):
     return cns_time_simple_0(time_days,full_power_frac,off_frac,fluctuation_frac)
 # ----------------------------------------------------------------------
 
+def cns_time_very_simple(time_days, frac=0.6):
+    while time_days>365.0:
+        time_days-=365.0
+    if time_days<frac*365.0:
+        return 1.0
+    elif time_days<(frac+(1.0-frac)/2.0)*365.0:
+        return 0.6
+    else:
+        return 0.4
