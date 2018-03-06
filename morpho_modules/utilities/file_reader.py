@@ -1,5 +1,5 @@
 #======================================================
-# binned_spectra.py
+# file_reader.py
 #
 # Author: J. Johnston
 # Date: Mar. 1, 2018
@@ -22,6 +22,8 @@ except ImportError as e:
 def read_txt_array(file_path, idx=None):
     """Read an array from a text file created with np.savetxt
 
+    Only works for 1D or 2D array (Such as those saved by np.savetxt)
+
     Args:
         file_path: Path to the text file
         idx: String specifying elements to return. None returns the
@@ -42,7 +44,7 @@ def read_txt_array(file_path, idx=None):
     else:
         indices = idx.split(',')
         if len(indices)==1:
-            if indices==":":
+            if indices[0]==":":
                 return result
             else:
                 return result[int(indices[0])]
@@ -85,7 +87,7 @@ def read_root_branch(file_path, tree_name, branch_name):
     return result
 
 def read_R_variable(file_path, var_name):
-    """Read an array from a text file created with np.savetxt
+    """Read an array from an R file
 
     Args:
         file_path: Path to the R file
@@ -96,6 +98,7 @@ def read_R_variable(file_path, var_name):
 
     Throws:
         IOError: If the given file does not exist
+        KeyError: If the given variable is not in the R file
     """
     r_dict = pystan.misc.read_rdump(file_path)
     return r_dict[var_name]
@@ -112,9 +115,11 @@ def get_variable_from_file(path, file_format, variable=None):
             "root", "R", or "python"
         variable: Variable to access. The form depends on the file
             format:
-          - "text": The file will be loaded with np.loadtxt. Set
-            variable=None to load the entire array, or pass an int
-            specifying the column to load.
+          - "text": The file will be loaded with np.loadtxt. Pass a
+            string specifying elements to return. None returns the
+            entire array. "1,2" will return the element at index (1,2).
+            "1" or "1,:" will return the second row, and ":,1" will
+            return the second column.
           - "root": variable is a length 2 list of str specifying the
             tree name and branch name.
           - "R": variable is a string specifying the variable name
@@ -131,7 +136,7 @@ def get_variable_from_file(path, file_format, variable=None):
         IOError: If the given file does not exist
     """
     if file_format=="text":
-        print("reading text not yet implemented")
+        res_variable = read_txt_array(path, variable)
     elif file_format=="root":
         res_variable = read_root_branch(path, variable[0], variable[1])
     elif file_format=="R":
