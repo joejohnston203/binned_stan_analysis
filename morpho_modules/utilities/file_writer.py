@@ -107,7 +107,15 @@ def write_R_variable(file_path, var_name, variable,
     if recreate or not os.path.isfile(file_path):
         r_dict = {}
     else:
-        r_dict = pystan.misc.read_rdump(file_path)
+        try:
+            r_dict = pystan.misc.read_rdump(file_path)
+        except ValueError as e:
+            logger.critical("Could not open R file due to error: %s"%e)
+            logger.critical("Output path: %s"%file_path)
+            logger.critical("Output variable name: %s"%var_name)
+            logger.critical("Output value: %s"%variable)
+            logger.critical("Exiting without writing")
+            return
     r_dict[var_name] = variable
     pystan.misc.stan_rdump(r_dict, file_path)
     return

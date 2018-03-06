@@ -86,6 +86,34 @@ def read_root_branch(file_path, tree_name, branch_name):
     myfile.Close()
     return result
 
+def histogram_root_branch(binning, file_path, tree_name, branch_name):
+    """Get and histogram a branch from a root file
+
+    Args:
+        binning: List defining bin endges
+        file_path: Path to the root file
+        tree_name: Name of the tree to access
+        branch_name: Name of branch to return
+
+    Returns:
+        3-tuple: (np array containing the counts for each bin,
+            mean, sigma)
+
+    Throws:
+        IOError: If the given file does not exist
+    """
+    myfile = ROOT.TFile(file_path,"READ")
+    tree = myfile.Get(tree_name)
+    rh = ROOT.TH1F("rh", "", len(binning)-1, binning)
+    tree.Draw(branch_name+">>rh", "", "goff")
+    mean = rh.GetMean()
+    sigma = rh.GetStdDev()
+    bin_contents = np.empty(len(binning)-1)
+    for i in range(len(binning)-1):
+        bin_contents[i] = rh.GetBinContent(i+1)
+    myfile.Close()
+    return (bin_contents, mean, sigma)
+
 def read_R_variable(file_path, var_name):
     """Read an array from an R file
 
@@ -149,7 +177,8 @@ def get_variable_from_file(path, file_format, variable=None):
     return res_variable
     
 
-def get_histo_shape_from_file(binning, path, file_format, variables):
+def get_histo_shape_from_file(binning, path, file_format, variables,
+                              get_mean_sigma=True):
     """Get a histogram shape from file
 
     Args:
@@ -168,10 +197,11 @@ def get_histo_shape_from_file(binning, path, file_format, variables):
             in each bin.
         variables: Dictionary containing the variables used to access
             the data. The formatting depends on the file format:
-          - "text": variables should containg a key "columns",
-            containing a list of columns containing the data. There
-            should be one column for "values" or "counts",and two
-            columns for "function".
+          - "text":  variables should contain a key "columns" specifying
+            elements to return. None returns the
+            entire array. "1,2" will return the element at index (1,2).
+            "1" or "1,:" will return the second row, and ":,1" will
+            return the second column.
           - "root": variables should contain a key "tree" with
             the name of the tree, and a key "branches" with a list of
             branches (one for "values" or "counts", two for "function")
@@ -181,6 +211,8 @@ def get_histo_shape_from_file(binning, path, file_format, variables):
           - "python": variables should contain a key "module" and a key
             "method_name" specifying the path to the module to load, and
             the name of the method defining the function.
+        get_mean_sigma: Whether the mean and sigma should be calculated.
+            0 is returned for both if set to False. (Default True).
     Returns:
         A 3-tupe containing (np.array, float64, float64).
         np.array specifies the number of counts in each bin described by
@@ -192,8 +224,8 @@ def get_histo_shape_from_file(binning, path, file_format, variables):
         IOError: If the given file does not exist
     """
     if "text" in file_format:
-        print("text not yet implemented")
-        return None
+        if "counts" in file_format or "values" in file_format:
+            res_arr = read_txt_array(path, variables["columns"])
     elif "root" in file_format:
         if "counts" in file_format or "values" in file_format:
             res_arr = get_variable_from_file(path, "root",
@@ -216,34 +248,40 @@ def get_histo_shape_from_file(binning, path, file_format, variables):
         logger.warn("Invalid file_format given (%s), returning None")
         return None
 
-    total = 0.
-    nelts = 0
-    sigma = 0.0
+    average = 0.
+    sigma = 0.
 
     # For values, histogram the given array
     if "values" in file_format:
-        average = np.mean(res_arr)
-        sigma = np.std(res_arr)
-        res_arr = np.histogram(res_arr, binning)
+        if(get_mean_sigma):
+            average = np.mean(res_arr)
+            sigma = np.std(res_arr)
+        res_arr = np.histogram(res_arr, binning)[0]
 
     # For a spectrum, integrate over each bin
     if "function" in file_format:
         pass
 
     if "counts" in file_format or "function" in file_format:
-        bin_centers = []
-        for i in range(len(binning)-1):
-            bin_centers.append(binning[i] +
-                              (binning[i+1]-binning[i])/2.0)
-        for i in range(len(res_arr)):
-            total += res_arr[i]*bin_centers[i]
-            nelts += res_arr[i]
-        average = total/float(nelts)
-        if nelts>1:
+        if not len(binning)-1==len(res_arr):
+            logger.error("Counts length different from binning. Returning.")
+        elif(get_mean_sigma):
+            total = 0.
+            nelts = 0
+            sigma = 0.0
+            bin_centers = []
+            for i in range(len(binning)-1):
+                bin_centers.append(binning[i] +
+                                   (binning[i+1]-binning[i])/2.0)
             for i in range(len(res_arr)):
-                sigma += (bin_centers[i]-average)**2*res_arr[i]
-            sigma = np.sqrt(sigma/(nelts-1))
-        else:
-            sigma = float('inf')
+                total += res_arr[i]*bin_centers[i]
+                nelts += res_arr[i]
+            average = total/float(nelts)
+            if nelts>1:
+                for i in range(len(res_arr)):
+                    sigma += (bin_centers[i]-average)**2*res_arr[i]
+                sigma = np.sqrt(sigma/(nelts-1))
+            else:
+                sigma = float('inf')
 
     return (np.array(res_arr), average, sigma)
