@@ -202,9 +202,32 @@ preprocessing:
               function : "cns_time_very_simple"
               function_options:
                 frac : 0.6
+    - module_name : "binned_fake_data"
+      method_name : "binned_fake_data"
+      output_dir : "cuore_test/fake_data"
+      poisson_fluctuate : True
+      parameters:
+        - name : "p_10mKFlan_u238"
+          magnitude : 1.0
+          shapes:
+            - path : "cuore_test/shapes/test_shapes.out"
+              format : "R"
+              variables : "p_10mKFlan_u238_energy"
+            - path : "cuore_test/shapes/test_shapes.out"
+              format : "R"
+              variables : "p_10mKFlan_u238_time"
+        - name : "p_10mKFlan_th232"
+          magnitude : 1.0
+          gaussian_fluctuate: True
+          gaussian_sigma: 0.05
+          shapes:
+            - path : "cuore_test/shapes/test_shapes.out"
+              format : "R"
+              variables : "p_10mKFlan_th232_energy"
+            - path : "cuore_test/shapes/test_shapes.out"
+              format : "R"
+              variables : "p_10mKFlan_th232_time"
 
-#- module_name: "binned_fake_data"
-#      method_name: "binned_fake_data"
 stan:
   # Name of the model
   name: "binned_data_analysis_1D_3back" # Stan
