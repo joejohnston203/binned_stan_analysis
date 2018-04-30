@@ -23,6 +23,7 @@ Functions:
 
 ToDo:
   - Add the option to output debugging plots
+  - Implement the binning algorithm
 """
 
 import logging
@@ -61,7 +62,7 @@ class GenerateShapesProcessor:
             dimension of the analysis (eg "energy" and "time"). (required).
             Each dictionary must contain the following keys:
           - name: Name of the dimension
-          - binning_type: How binning should be determine. Options are
+          - binning_type: How binning should be determined. Options are
             "file", "uniform", or "algorithm". If file, then a file must
             give the N+1 bin edges defining the bins. If "uniform", then
             N equally spaced bins between a lower bound and upper bound

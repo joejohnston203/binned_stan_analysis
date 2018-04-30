@@ -262,7 +262,7 @@ def create_shape_info(vars_dict,signals_dict,output_file,output_type,
                 save_plot_file_name = info_dir+"/"+tree_name+".pdf"
             else:
                 save_plot_file_name = ""
-            curr_x_name = read_param(dim_p,'x_branch_name','xdata_%i'%i)
+            curr_x_name = read_param(dim_p,'x_branch_name','xdata_%i'%idsig)
             curr_y_name = read_param(dim_p,'y_branch_name',sig_name)
 
             curr_tree = \

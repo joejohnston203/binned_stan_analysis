@@ -14,6 +14,10 @@ Classes:
 
 Functions:
   - binned_fake_data: Generate and store fake data
+
+ToDo:
+  - Allow for hierarchical parameters that fluctuate separately in each
+    bin, or in each bin along a dimension.
 """
 
 import logging

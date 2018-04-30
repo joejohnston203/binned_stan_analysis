@@ -15,6 +15,18 @@ Classes:
 
 Functions:
   - reconstructed_spectrum: Plot reconstruction with stan parameters
+
+ToDo:
+  - Display error bars on the plots
+  - Enable specifying a column or row from an R array
+  - All plots currently assume 1D. Maybe I can naturally extend to
+    multiple dimensions?
+  - Output the mean and stddev for each parameter. Possibly calculate
+    the rate per region for each parameter. That is, I think if I
+    get the sum over the shape for each shape, then divided by it,
+    I would get the total expected counts. If I
+    then divide by the range of each dimension, I would get the rate
+    in counts/keV/day (for example)
 """
 
 import copy
