@@ -146,17 +146,17 @@ preprocessing:
     info_output_prefix: ""
       # Optional (Default=""): prefix of prefix_shape_info.txt, prefix_fake_data_info.txt, and stored plots
 morpho:
-  do_stan: False
+  do_stan: True
   do_preprocessing: True
   do_postprocessing: False
-  do_plots: False
+  do_plots: True
 preprocessing:
   which_pp:
     - module_name : "binned_shapes"
       method_name : "generate_shapes"
       generate_shapes : True
 
-      output_dir : "cuore_test/shapes"
+      output_dir : "morpho_data/shapes"
       output_path_prefix : "test_"
       output_format : "R"
 
@@ -184,7 +184,7 @@ preprocessing:
               tree : "outTree"
               branches : ["Ener2"]
             - format : "python function"
-              path : "ric_functions"
+              path : "functions"
               module : "ric_shapefunctions"
               function : "cns_time_very_simple"
               function_options:
@@ -200,7 +200,7 @@ preprocessing:
               tree : "outTree"
               branches : ["Ener2"]
             - format : "python function"
-              path : "ric_functions"
+              path : "functions"
               module : "ric_shapefunctions"
               function : "cns_time_very_simple"
               function_options:
@@ -208,17 +208,17 @@ preprocessing:
 
     - module_name : "binned_fake_data"
       method_name : "binned_fake_data"
-      output_dir : "cuore_test/fake_data"
+      output_dir : "morpho_data/fake_data"
       poisson_fluctuate : True
 
       parameters:
         - name : "p_10mKFlan_u238"
           magnitude : 1.0
           shapes:
-            - path : "cuore_test/shapes/test_shapes.out"
+            - path : "morpho_data/shapes/test_shapes.out"
               format : "R"
               variables : "p_10mKFlan_u238_energy"
-            - path : "cuore_test/shapes/test_shapes.out"
+            - path : "morpho_data/shapes/test_shapes.out"
               format : "R"
               variables : "p_10mKFlan_u238_time"
         - name : "p_10mKFlan_th232"
@@ -226,10 +226,10 @@ preprocessing:
           gaussian_fluctuate: True
           gaussian_sigma: 0.05
           shapes:
-            - path : "cuore_test/shapes/test_shapes.out"
+            - path : "morpho_data/shapes/test_shapes.out"
               format : "R"
               variables : "p_10mKFlan_th232_energy"
-            - path : "cuore_test/shapes/test_shapes.out"
+            - path : "morpho_data/shapes/test_shapes.out"
               format : "R"
               variables : "p_10mKFlan_th232_time"
 
@@ -314,7 +314,7 @@ plot:
   which_plot:
     - module_name : "binned_spectra"
       method_name : "reconstructed_spectrum"
-      output_dir : "./cuore_test/plots"
+      output_dir : "./results/plots"
       output_path_prefix : "temp_spectrum_"
       plot_data : True
       make_individual_spectra : True

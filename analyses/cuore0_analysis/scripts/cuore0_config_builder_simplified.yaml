@@ -1,16 +1,16 @@
 generate_morpho_config: True
-morpho_config_output_path: "scripts/example_binned_analysis.yaml"
+morpho_config_output_path: "scripts/cuore0_analysis_simplified.yaml"
 generate_stan_model: True
-stan_model_output_path: "models/example_binned_analysis.stan"
+stan_model_output_path: "models/cuore0_analysis_simplified.stan"
 
 output_paths:
-  shape_output_dir: "cuore/data/shapes"
-  misc_config_output_dir: "cuore/data/"
-  fake_data_output_dir: "cuore/data/"
-  morpho_output_dir: "cuore/results/"
+  shape_output_dir: "morpho_data/shapes"
+  misc_config_output_dir: "morpho_data/"
+  fake_data_output_dir: "morpho_data/"
+  morpho_output_dir: "results/"
   morpho_output_file: "cuore_analysis_results.root"
-  plots_output_dir: "cuore/results/plots"
-  debug_dir: "cuore/data/debug"
+  plots_output_dir: "results/plots"
+  debug_dir: "morpho_data/debug"
 
 stan:
   name: "cuore_example_fit"
@@ -43,14 +43,14 @@ parameters:
     lower_bound: 0.
     upper_bound: 1000.
     shapes:
-      - path : "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
+      - path : "data/simulations/10mKFlan-u238_cnaf104.root"
         renormalize : True
         #multiply_shape : 1.0
         #number_save_type : 'float64'
         format : "root values"
         tree : "outTree"
         branches : ["Ener2"]
-      - path : "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
+      - path : "data/simulations/10mKFlan-u238_cnaf104.root"
         renormalize : False
         #multiply_shape : 1.0
         #number_save_type : 'float64'

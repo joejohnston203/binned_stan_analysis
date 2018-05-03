@@ -1,120 +1,102 @@
-Stan/morpho model to analyze the sensitivity of any experiment where the data can be binned. Specific scripts analyze the sensitivity of Ricochet at the Double Chooz Reactor.
+Stan/morpho models to analyze the sensitivity of any experiment where the data can be binned.
 
-The frequentist_analysis folder contains a python program to perform a frequentist analysis. It takes configuration scripts for the Bayesian code and performs a frequentist analysis. See the end of this README for more details on its structure and use.
-
-Requirements
 ======
 
   Designed to work with version 1.4.1 of morpho. https://github.com/project8/morpho/tree/v1.4.1
   
   You will need to install root in order to have access to pyroot.
 
-  If you want to use the given example analysis, update activate_venv.sh to point to your virtualenv directory where morpho was installed.
-
   The files from morpho_modules need to be copied into morpho/morpho in the morpho installation.
   
 Directory Structure
 ======
 
-  The following directories contain files that will be copied and altered when creating new models:
+  config_builders
 
-  scripts
+    Python scripts that generate a morpho config file and a stan model for a given analysis. For example, the cuore_config_builder.py script generates files necessary to do an analysis of 1-dimensional data. Using a config builder is NOT necessary, but it can be useful in an analysis that has a large number of parameters, such as the cuore analysis.
 
-    The .yaml configuration files for stan models should be stored here. The
-    .yaml file will include parameters that will be used for preprocessing,
-    such as generating fake data, under the header 'preprocessing:'. It will also
-    include parameters for plots, under the header 'post_morpho_plots:'.
+  docs
 
-    See example_ricochet_rate_analyzer.yaml or example_ricochet_rate_spec_analyzer.yaml
-    for examples of how .yaml files should be created.
-
-  ric_functions
-
-    Functions and .csv files specific to the Ricochet experiment, such as spectral
-    shapes and time dependence shapes. The .yaml file should specifiy the paths
-    where the relevant files are located.
-
-  models
-
-    Stan models (.stan files) are stored here. For example,
-    binned_data_analysis_1D_1back.stan is a model that takes the inputs from
-    pre_morpho_processing.py, then runs an analysis of the generated 1-dimensional
-    data assuming that it results from a single signal and a single background.
-    binned_data_analysis_2D_4back_tot_bin_var.stan is a model that analyzes
-    2-dimensional data assuming that it results from one signal and four backgrounds.
-    This model also allows the total number of counts in each bin to vary by some amount
-    (if such variation was turned on when preprocessing was done). (The tot_bin_var
-    version of this model should only be used if the model actually does allow the
-    counts to fluctuate in each bin because it does run more slowly).
-
-    When creating a new analysis, a new model should be created that properly fits
-    for the correct number of signals and backgrounds, as well as any gaussian
-    fluctuations in the signals, backgrounds, and counts. The stan models should be
-    fairly general. For example, binned_data_analysis_1D_2back.stan can be used
-    to analyze any 1-dimensional data that results from 1 signal and 2 backgrounds,
-    and allows the signal to gaussian fluctuate by some fraction in each bin, and/or
-    to fluctuate globally.
-
-  bash_scripts
-
-    Scripts to iterate over configurations and run the analysis for each. For example,
-    example_run_1D_analysis.sh copies the example_ricochet_rate_analyzer.yaml script,
-    then edits the copy to run the analysis with different signal and background
-    magnitudes.
-
-  The following directory should not be altered when creating new models:
+    Documentation. Needs to be updated.
 
   morpho_modules
 
-    These modules will be copied into the morpho/morpo directory where morpho
-    was installed. They can then be accessed and loaded by morpho.
+    Morpho modules that need to be copied into morpho/morpho
 
-  python_scripts
-  
-    pre_morpho_processing.py: Can generates the shape of signals and
-    backgrounds using inputs from a .yaml file, then stores the shapes of
-    the signals and backgrounds in the data directory. Informational
-    outputs, such as plots of each background shape, can optionally be
-    generated and stored. The generated shapes and inputs from a .yaml config
-    file can then be used to generate fake data.
+  analyses
 
-    post_morpho_plots.py: Creates histograms of analysis parameters, correlation
-    plots, and plots of spectra or rate vs time. Takes inputs from a .yaml file.
+    Contains folders for multiple sample analyses. Inside each analysis folder, there generally are the following folders. Note however, that each of these names are defined in the yaml file used by morpho, and the names can be changed if they are also changed in the yaml file.
 
-    root_tools.py: Contains tools to read and write root files, as well as make
-    plots using root.
-    dict_tools.py: Contains tools to read a dictionary from a .yaml file, and
-    work with that dictionary.
+      scripts
 
-    run_analysis.sh: Script to run preprocessing, stan, and make plots for
-    a given .yaml file.
+        The .yaml configuration files for morpho should be stored here. The
+        .yaml file will include parameters that will be used by morpho for preprocessing,
+	running stan, and making plots.
 
-  The sample analysis will create the following three directories while running.
-  Sample outputs from ./bash_scripts/example_simple_run.sh are currently stored
-  here, but these directories could be deleted before running an analysis. The
-  locations of these directories can be edited in the .yaml file:
+      models
 
-  data
+        Stan models (.stan files) are stored here.
 
-    Information about signals and backgrounds, such as shapes and uncertanties,
-    will be stored here. Generated fake data will be stored here. Diagnostic outputs
-    and plots, such as plots of signal and background shapes, can also be stored. Nothing
-    in this folder should be edited by hand, because it will all be generated
-    by scripts in the python_scripts folder.
+      functions
 
-  results
+        Functions used by the stan model should be stored here.
 
-    Outputs will be stored here. Specifically, stan will store a .root file with
-    distributions of parameters, a .pkl file, and a cache_name_file. post_morpho_plots.py
-    will then store plots and a table of the results.
+      data
 
-  cache
+        Any other inputs should be stored here, such as root files with the
+	spectral shape of a parameter.
 
-    cached stan models will be stored here, so the model does not have to be recompiled
-    every time it is run.
+      The following folders should initially be empty when an analysis starts running,
+      and they will then be populated by morpho:
 
-Running
+      morpho_data
+
+        Information about signals and backgrounds, such as shapes and uncertanties,
+        will be stored here. Generated fake data will be stored here. Diagnostic outputs
+        and plots, such as plots of signal and background shapes, can also be stored.
+
+      results
+
+        Outputs will be stored here. Specifically, stan will store a .root file with
+        distributions of parameters, a .pkl file, and a cache_name_file.
+
+      cache
+
+        cached stan models will be stored here, so the model does not have to be recompiled
+        every time it is run.
+
+CUORE 0 Analysis
 ======
+
+All analysis scripts should be run from the folder analyses/cuore0_analysis.
+
+The cuore-0 analysis creates a model that is the sum of many parameters, with each paraeter representing some background in the cuore detector. It allows for multiple data sets, such as an M1 (single detector deposit) and an M2 (coincident deposits in two detectors) spectrum. For each parameter+data set combination, a spectrum for the parameter must be provided.
+
+The cuore config builder can be used to create the yaml file. cuore0_config_builder_simplified.yaml is a simplified file that referes only to shapes that are stored in the github repository. It can be used to generate a morpho config file and a stan model with the command:
+
+python python ../../config_builders/cuore_config_builder.py -c scripts/cuore0_config_builder_simplified.yaml
+
+This will create a morpho scripts, "scripts/cuore0_analysis_simplified.yaml", and a stan model, "models/cuore0_analysis_simplified.stan".
+
+This simplified model can then be run with morpho:
+
+morpho -c scripts/cuore0_analysis_simplified.yaml
+
+This will do the following:
+  - Obtain the spectral shape for each parameter and store the shapes to an R file
+  - Either generate fake data or access stored data, and store it to an R file
+  - Run a stan model that fits for the magnitude of each parameter
+  - Generate plots of the spectra and other useful quantities
+
+
+Ricochet Analysis
+======
+
+The ricochet_analysis folder contains scripts scripts that were used to predict
+the sensitivity of the Ricochet experiment for the case of 1D (time domain only)
+and 2D (time+energy) data. It currently is NOT set up to use the morpho_modules,
+and needs to be updated. Also, scripts currently are not working, and will need
+some debuggin to be fixed. The way it currently is intended to work is as follows:
 
   Once you have created a yaml_script, the following commands run the analysis and create plots:
 
@@ -146,36 +128,3 @@ Running
 
   The results that went into the Ricochet at Double Chooz paper can be accessed at:
   https://www.dropbox.com/sh/owa9y6qtmdcwenk/AABiqeQbo0WBhvnxuDFqY1VEa?dl=0
-
-Frequentist Analysis
-======
-
-This directory contains code to do a frequentist analysis. It takes a .yaml configuration file, and uses the same pre_processing and post_morpho_plots sections as the .yaml files for a bayesian analysis. Instead of the morpho and stan sections, a section labelled frequentist contains settings for the frequentist analysis.
-
-# Directory Structure (inside frequentist_analysis)
-
-The following directories can be changed when creating new models
-
-models
-
-  Likelihood functions are stored here.
-
-../scripts, ../ric_functions
-
-  .yaml scripts for the frequentist analysis will be formatted very similarly
-  to the scripts for the bayesian analysis. In fact, the preprocessing section
-  can be identical. However, a frequentist section must be added with parameters
-  in place of the stan and morpho sections, and the plotting section will be
-  different.
-
-The following should not be edited
-
-analysis_scripts
-
-  This contains the actual python code that does the analysis
-
-data, results
-
-  These folders are the currently specified locations in the .yaml script. If
-  the analysis is called from inside frequentist_analysis, then these
-  directories will also be created inside frequentist_analysis

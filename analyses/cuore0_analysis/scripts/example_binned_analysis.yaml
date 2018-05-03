@@ -1,0 +1,97 @@
+morpho:
+  do_stan: true
+  do_preprocessing: true
+  do_plots: true
+preprocessing:
+  which_pp:
+  - module_name: binned_shapes
+    method_name: generate_shapes
+    generate_shapes: true
+    output_dir: cuore/data/shapes
+    output_path_prefix: ''
+    output_format: R
+    dimensions:
+    - binning_format: text
+      binning_path: functions/cuore_functions/temp_binning.txt
+      binning_type: file
+      binning_variables: ':'
+      name: energy
+    parameters:
+    - name: p_10mKFlan_u238_0
+      regenerate: true
+      shapes:
+      - branches:
+        - Ener2
+        format: root values
+        multiply_shape: 1.0
+        path: functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root
+        renormalize: true
+        tree: outTree
+    - name: p_10mKFlan_u238_1
+      regenerate: true
+      shapes:
+      - branches:
+        - Ener2
+        format: root values
+        multiply_shape: 1.0
+        path: functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root
+        renormalize: false
+        tree: outTree
+  - module_name: binned_fake_data
+    method_name: binned_fake_data
+    output_dir: cuore/data/
+    output_path_prefix: fake_data
+    output_format: R
+    output_variable: fake_data_0
+    parameters:
+    - magnitude: 1.0
+      name: p_10mKFlan_u238
+      shapes:
+      - format: R
+        path: cuore/data/shapes/shapes.out
+        variables: p_10mKFlan_u238_0_energy
+  - module_name: binned_fake_data
+    method_name: binned_fake_data
+    output_dir: cuore/data/
+    output_path_prefix: fake_data
+    output_format: R
+    output_variable: fake_data_1
+    parameters:
+    - magnitude: 1.0
+      name: p_10mKFlan_u238
+      shapes:
+      - format: R
+        path: cuore/data/shapes/shapes.out
+        variables: p_10mKFlan_u238_1_energy
+stan:
+  data:
+    files:
+    - format: R
+      name: cuore/data/shapes/shapes.out
+    - format: R
+      name: cuore/data//fake_data.out
+    parameters:
+    - fillerParam: 0.0
+  model:
+    cache: cache
+    file: models/example_binned_analysis.stan
+    function_file: functions
+  name: cuore_example_fit
+  output:
+    branches:
+    - root_alias: signal_rate
+      variable: signal_rate
+    - root_alias: background_rate
+      variable: background_rate
+    fit: cuore/results//analysis_fit.pkl
+    format: root
+    name: cuore/results//cuore/results/
+    save_cache_name: cuore/data//cache_name_file.txt
+    tree: analysis_parameters
+  run:
+    algorithm: NUTS
+    chain: 1
+    iter: 2000
+    warmup: 1000
+which_plot:
+  which_plot: []
