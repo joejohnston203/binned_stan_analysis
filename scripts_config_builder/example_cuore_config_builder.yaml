@@ -1,0 +1,58 @@
+generate_morpho_config: True
+morpho_config_output_path: "scripts/example_binned_analysis.yaml"
+generate_stan_model: True
+stan_model_output_path: "models/example_binned_analysis.stan"
+
+output_paths:
+  shape_output_dir: "cuore/data/shapes"
+  misc_config_output_dir: "cuore/data/"
+  fake_data_output_dir: "cuore/data/"
+  morpho_output_dir: "cuore/results/"
+  morpho_output_file: "cuore_analysis_results.root"
+  plots_output_dir: "cuore/results/plots"
+  debug_dir: "cuore/data/debug"
+
+stan:
+  name: "cuore_example_fit"
+  model:
+    function_file: "functions"
+    cache: "cache"
+  run:
+    algorithm: "NUTS"
+    iter: 2000
+    warmup: 1000
+    chain: 1
+
+dimension:
+  name : "energy"
+  binning_type : "file"
+  binning_path : "functions/cuore_functions/temp_binning.txt"
+  binning_format : "text"
+  binning_variables : ":"
+
+generate_fake_data: True
+num_data_sets: 2
+data:
+  - load_data_path: None
+    load_data_format: None
+    load_data_variables: None
+
+parameters:
+  - name : "p_10mKFlan_u238"
+    magnitude: 1.0
+    shapes:
+      - path : "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
+        renormalize : True
+        #multiply_shape : 1.0
+        #number_save_type : 'float64'
+        format : "root values"
+        tree : "outTree"
+        branches : ["Ener2"]
+      - path : "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
+        renormalize : False
+        #multiply_shape : 1.0
+        #number_save_type : 'float64'
+        format : "root values"
+        tree : "outTree"
+        branches : ["Ener2"]
+
