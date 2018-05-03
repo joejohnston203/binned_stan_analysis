@@ -40,6 +40,8 @@ data:
 parameters:
   - name : "p_10mKFlan_u238"
     magnitude: 1.0
+    lower_bound: 0.
+    upper_bound: 1000.
     shapes:
       - path : "functions/cuore_functions/root_files/10mKFlan-u238_cnaf104.root"
         renormalize : True
