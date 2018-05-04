@@ -296,6 +296,11 @@ class GenerateShapesProcessor:
                                    binning_var_name, False)
             logger.info("\tBinning for dimension %s stored at %s"%
                         (d_name, binning_output_path))
+            binning_n_bins = len(self.binnings[-1])-1
+            write_variable_to_file(self.output_dir + "/" + \
+                                   self.output_path_prefix + "binnings.out",
+                                   "R", binning_n_bins, "nBins_%s"%d_name)
+
 
         logger.info("Generating and storing parameter shapes")
         self.param_shapes = []

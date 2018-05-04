@@ -337,7 +337,7 @@ class BinnedConfigBuilder:
         self.morpho_output_dir = \
             read_param(paths_dict, 'morpho_output_dir', "results")
         self.morpho_output_file = \
-            read_param(paths_dict, 'morpho_output_dir', "analysis_results.root")
+            read_param(paths_dict, 'morpho_output_file', "analysis_results.root")
         self.plots_output_dir = \
             read_param(paths_dict, 'plots_output_dir', "results/plots")
         self.plots_output_format = \
@@ -348,6 +348,10 @@ class BinnedConfigBuilder:
 
         self.morpho_output_tree = \
             read_param(paths_dict, 'morpho_output_tree', "analysis_parameters")
+
+        self.shapes_file = self.shape_output_dir + "/shapes.out"
+        self.binning_file = self.shape_output_dir + "/binnings.out"
+        self.fake_data_file = self.fake_data_output_dir + "/fake_data.out"# add this later
                 
 
         self.stan_dict = read_param(params, 'stan', {})
@@ -559,7 +563,7 @@ class BinnedConfigBuilder:
                     fd_params[-1]["name"] = self.param_names[i_param]
                     fd_params[-1]["magnitude"] = self.fake_data_magnitudes[i_param]
                     fd_params[-1]["shapes"] = [{
-                        "path":self.shape_output_dir + "/shapes.out",
+                        "path": self.shapes_file,
                         "format":"R",
                         "variables":"%s_%i_%s"%(self.param_names[i_param],
                                                 i_data, self.dimension["name"])
@@ -575,43 +579,89 @@ class BinnedConfigBuilder:
         self.stan_dict["data"] = {
             "files":[
                 {
-                    "name":self.shape_output_dir+"/shapes.out",
+                    "name":self.shapes_file,
                     "format":"R"
                 },
                 {
-                    "name":self.fake_data_output_dir+"/fake_data.out",
+                    "name":self.binning_file,
+                    "format":"R"
+                },
+                {
+                    "name":self.fake_data_file,
                     "format":"R"
                 }
             ],
             "parameters":[
                 {
-                    "fillerParam":0.
+                    
                 }
             ]
         }
+        params_to_save = []
+        for i_param in range(len(self.parameters)):
+            params_to_save.append(
+                {"variable": "rate_%s"%self.param_names[i_param],
+                 "root_alias": "rate_%s"%self.param_names[i_param]}
+            )
         self.stan_dict["output"] = {
             "name":self.morpho_output_dir+"/"+self.morpho_output_file,
             "format":"root",
             "tree":self.morpho_output_tree,
             "save_cache_name":self.misc_config_output_dir+"/cache_name_file.txt",
             "fit": self.morpho_output_dir+"/analysis_fit.pkl",
-            "branches":[
-                {"variable": "signal_rate",
-                 "root_alias": "signal_rate"},
-                {"variable": "background_rate",
-                 "root_alias": "background_rate"}
-            ]
+            "branches":params_to_save
         }
         morpho_config_dict["stan"] = self.stan_dict
 
         # Plotting configuration
-        plotting = []
 
+        '''plotting = []
+        for i_data in range(self.num_data_sets):
+            binned_spectra_dict = UnsortableOrderedDict()
+            binned_spectra_dict["module_name"] = "binned_spectra"
+            binned_spectra_dict["method_name"] = "reconstructed_spectrum"
+            binned_spectra_dict["output_dir"] = self.plots_output_dir
+            binned_spectra_dict["output_path_prefix"] =  "data_set_%i_"%i_data
+            binned_spectra_dict["plot_data"] = True
+            binned_spectra_dict["make_individual_spectra"] = True
+            binned_spectra_dict["make_stacked_spectra"] = True
+            binned_spectra_dict["make_unstacked_spectra"] = True
+            binned_spectra_dict["make_reconstruction_plot"] = True
+            binned_spectra_dict["make_residual_plot"] = True
+            binned_spectra_dict["make_data_plot"] = True
+            binned_spectra_dict["binning_file"] = self.binning_file
+            binned_spectra_dict["divide_by_bin_width"] = True
+            binned_spectra_dict["xlabel"] = "keV"
+            binned_spectra_dict["ylabel"] = "Count Per keV"
+            binned_spectra_dict["ylog"] = False
+            binned_spectra_dict["title_prefix"] = "Data Set %i "%i_data
+            binned_spectra_dict["data_path"] = self.fake_data_file
+            binned_spectra_dict["data_format"] = "R counts"
+            binned_spectra_dict["data_var_names"] = ["fake_data_%i"%i_data]
+            binned_spectra_dict["parameters"] = []
+            for i_param in range(self.num_params):
+                binned_spectra_dict["parameters"].append(
+                    {
+                        "name": self.param_names[i_param],
+                        "shape_path": self.shapes_file,
+                        "shape_format": "R counts",
+                        "shape_var_names": ["%s_%i"%(self.param_names[i_param],i_data)],
+                        "distribution_path": self.morpho_output_dir+"/"+\
+                                             self.morpho_output_file+".root",
+                        "distribution_format": "root values",
+                        "distribution_tree": self.morpho_output_tree,
+                        "distribution_branches": ["rate_"+self.param_names[i_param]]
+                    }
+                )
+            plotting.append(binned_spectra_dict)
+            
         for plot_dict in self.which_plot:
             plotting.append(plot_dict)
+
         which_plot = UnsortableOrderedDict()
         which_plot["which_plot"] = plotting
-        morpho_config_dict["which_plot"] = which_plot
+        morpho_config_dict["which_plot"] = which_plot'''
+            
 
         return yaml.dump(morpho_config_dict, default_flow_style=False)
 
@@ -640,20 +690,21 @@ class BinnedConfigBuilder:
         Returns:
             str: String containing the stan model code
         """
+        d_name = self.dimension["name"]
         model = "/* CUORE analysis Stan model\n"+\
                 "* Automatically generated by BinnnedConfigBuilder object\n*/\n\n"+\
                 "functions {\n\n}\n\n"
 
         model += "data {\n\n"+\
-                "  int nBins;\n\n"+\
+                "  int nBins_%s;\n\n"%d_name+\
                 "  // Fake Data\n"
         for i_data in range(self.num_data_sets):
-            model += "  int fake_data_%i[nBins];\n"%i_data
+            model += "  int fake_data_%i[nBins_%s];\n"%(i_data,d_name)
         model += "\n"
         for i_data in range(self.num_data_sets):
             model += "  // Shapes for Data Set %i\n"%i_data
             for p_name in self.param_names:
-                model += "  vector[nBins] %s_%i;\n"%(p_name, i_data)
+                model += "  vector[nBins_%s] %s_%i_%s;\n"%(d_name,p_name,i_data,d_name)
             model += "\n"
         model += "}\n\n"
 
@@ -667,19 +718,19 @@ class BinnedConfigBuilder:
 
         model += "transformed parameters {\n\n"
         for i_data in range(self.num_data_sets):
-            model += "  real n_counts_recon_%i[nBins];\n"%i_data
+            model += "  real n_counts_recon_%i[nBins_%s];\n"%(i_data,d_name)
         model += "\n"
         for i_data in range(self.num_data_sets):
-            model += "  for(i in 1:nBins){\n"+\
+            model += "  for(i in 1:nBins_%s){\n"%d_name+\
                      "    n_counts_recon_%i[i] =\n"%i_data
             for i_param, p_name in enumerate(self.param_names):
-                model += "      rate_%s*%s_%i[i]+\n"%(p_name,p_name,i_data)
+                model += "      rate_%s*%s_%i_%s[i]+\n"%(p_name,p_name,i_data,d_name)
             model = model[:-2] + ";\n"
             model += "  }\n\n"
         model += "}\n\n"
 
         model += "model {\n\n"
-        model += "  for(i in 1:nBins){\n"
+        model += "  for(i in 1:nBins_%s){\n"%d_name
         for i_data in range(self.num_data_sets):
             model += "    target += poisson_lpmf(fake_data_%i[i] | n_counts_recon_%i[i]);\n"%\
                      (i_data, i_data)

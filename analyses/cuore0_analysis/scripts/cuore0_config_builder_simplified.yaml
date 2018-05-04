@@ -5,33 +5,33 @@ stan_model_output_path: "models/cuore0_analysis_simplified.stan"
 
 output_paths:
   shape_output_dir: "morpho_data/shapes"
-  misc_config_output_dir: "morpho_data/"
-  fake_data_output_dir: "morpho_data/"
-  morpho_output_dir: "results/"
-  morpho_output_file: "cuore_analysis_results.root"
+  misc_config_output_dir: "morpho_data"
+  fake_data_output_dir: "morpho_data"
+  morpho_output_dir: "results"
+  morpho_output_file: "cuore_analysis_results"
   plots_output_dir: "results/plots"
-  debug_dir: "morpho_data/debug"
+  debug_dir: "results/debug"
 
 stan:
-  name: "cuore_example_fit"
+  name: "cuore_simplified_fit"
   model:
     function_file: "functions"
     cache: "cache"
   run:
     algorithm: "NUTS"
-    iter: 2000
-    warmup: 1000
+    iter: 20000
+    warmup: 10000
     chain: 1
 
 dimension:
   name : "energy"
   binning_type : "file"
-  binning_path : "functions/cuore_functions/temp_binning.txt"
+  binning_path : "data/binnings/temp_binning.txt"
   binning_format : "text"
   binning_variables : ":"
 
 generate_fake_data: True
-num_data_sets: 2
+num_data_sets: 1
 data:
   - load_data_path: None
     load_data_format: None
@@ -39,7 +39,7 @@ data:
 
 parameters:
   - name : "p_10mKFlan_u238"
-    magnitude: 1.0
+    magnitude: 1000.0
     lower_bound: 0.
     upper_bound: 1000.
     shapes:
@@ -50,11 +50,38 @@ parameters:
         format : "root values"
         tree : "outTree"
         branches : ["Ener2"]
-      - path : "data/simulations/10mKFlan-u238_cnaf104.root"
-        renormalize : False
-        #multiply_shape : 1.0
-        #number_save_type : 'float64'
+  - name : "p_10mKFlan_th232"
+    magnitude: 500.
+    lower_bound: 0.
+    upper_bound: 1000.
+    shapes:
+      - path : "data/simulations/10mKFlan-th232_cnaf103.root"
+        renormalize : True
         format : "root values"
         tree : "outTree"
         branches : ["Ener2"]
-
+#  - name : "p_10mK_co60"
+#    magnitude: 1.0
+#    lower_bound: 0.
+#    upper_bound: 1000.
+#    shapes:
+#      - path : "data/simulations/10mK-co60_cnaf113.root"
+#        renormalize : True
+#        format : "root values"
+#        tree : "outTree"
+#        branches : ["Ener2"]
+#      - path : "data/simulations/10mK-co60_cnaf113.root"
+#        renormalize : False
+#        format : "root values"
+#        tree : "outTree"
+#        branches : ["Ener2"]
+#  - name : "p_10mK_k40"
+#    magnitude: 0.1
+#    lower_bound: 0.
+#    upper_bound: 1000.
+#    shapes:
+#      - path : "data/simulations/10mK-k40_cnaf121.root"
+#        renormalize : True
+#        format : "root values"
+#        tree : "outTree"
+#        branches : ["Ener2"]
