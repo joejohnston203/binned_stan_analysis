@@ -19,8 +19,8 @@ stan:
     cache: "cache"
   run:
     algorithm: "NUTS"
-    iter: 20000
-    warmup: 10000
+    iter: 2000
+    warmup: 1000
     chain: 1
 
 dimension:
@@ -41,7 +41,7 @@ parameters:
   - name : "p_10mKFlan_u238"
     magnitude: 1000.0
     lower_bound: 0.
-    upper_bound: 1000.
+    upper_bound: 10000.
     shapes:
       - path : "data/simulations/10mKFlan-u238_cnaf104.root"
         renormalize : True
@@ -53,7 +53,7 @@ parameters:
   - name : "p_10mKFlan_th232"
     magnitude: 500.
     lower_bound: 0.
-    upper_bound: 1000.
+    upper_bound: 10000.
     shapes:
       - path : "data/simulations/10mKFlan-th232_cnaf103.root"
         renormalize : True

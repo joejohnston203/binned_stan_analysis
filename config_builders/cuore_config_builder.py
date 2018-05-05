@@ -658,6 +658,57 @@ class BinnedConfigBuilder:
                     }
                 )
             plotting.append(binned_spectra_dict)
+
+        # Add Histogram plot of each param distro
+        if not os.path.exists(self.plots_output_dir + "/param_distros"):
+            os.makedirs(self.plots_output_dir + "/param_distros")
+        for i_param in range(self.num_params):
+            p_name = self.param_names[i_param]
+            histo_dict = UnsortableOrderedDict()
+            histo_dict["method_name"] = "histo"
+            histo_dict["module_name"] = "histo"
+            histo_dict["title"] = "distro"
+            histo_dict["input_file_name"] = self.morpho_output_dir+"/"+\
+                                            self.morpho_output_file+".root"
+            histo_dict["input_tree"] = self.morpho_output_tree
+            histo_dict["output_path"] = self.plots_output_dir + "/param_distros"
+            histo_dict["data"] = ["rate_%s"%p_name]
+            plotting.append(histo_dict)
+
+        # Add correlation plots
+        # CONTINUE HERE
+        apost_dict = UnsortableOrderedDict()
+        apost_dict["method_name"] = "aposteriori_distribution"
+        apost_dict["module_name"] = "histo"
+        apost_dict["input_file_name"] = self.morpho_output_dir+"/"+\
+                                        self.morpho_output_file+".root"
+        apost_dict["input_tree"] = self.morpho_output_tree
+        apost_dict["root_plot_option"] = "cont"
+        apost_dict["output_path"] =  self.plots_output_dir
+        apost_dict["title"] = "posterior_distros"
+        apost_dict["output_format"] = "pdf"
+        apost_dict["output_width"] = 12000
+        apost_dict["output_height"] = 11000
+        apost_dict["data"] = []
+        for p_name in self.param_names:
+            apost_dict["data"].append("rate_"+p_name)
+        plotting.append(apost_dict)
+
+        corr_factors_dict = UnsortableOrderedDict()
+        corr_factors_dict["module_name"] = "histo"
+        corr_factors_dict["method_name"] = "correlation_factors"
+        corr_factors_dict["input_file_name"] = self.morpho_output_dir+"/"+\
+                                                self.morpho_output_file+".root"
+        corr_factors_dict["input_tree"] = self.morpho_output_tree
+        corr_factors_dict["output_path"] = self.plots_output_dir
+        corr_factors_dict["title"] = "correlation_factors"
+        corr_factors_dict["output_format"] = "pdf"
+        corr_factors_dict["output_width"] = 12000
+        corr_factors_dict["output_height"] = 12000
+        corr_factors_dict["data"] = []
+        for p_name in self.param_names:
+            corr_factors_dict["data"].append("rate_"+p_name)
+        plotting.append(corr_factors_dict)
             
         for plot_dict in self.which_plot:
             plotting.append(plot_dict)
