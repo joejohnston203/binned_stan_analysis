@@ -615,7 +615,7 @@ class BinnedConfigBuilder:
 
         # Plotting configuration
 
-        '''plotting = []
+        plotting = []
         for i_data in range(self.num_data_sets):
             binned_spectra_dict = UnsortableOrderedDict()
             binned_spectra_dict["module_name"] = "binned_spectra"
@@ -630,6 +630,8 @@ class BinnedConfigBuilder:
             binned_spectra_dict["make_residual_plot"] = True
             binned_spectra_dict["make_data_plot"] = True
             binned_spectra_dict["binning_file"] = self.binning_file
+            binned_spectra_dict["binning_file_format"] = "R"
+            binned_spectra_dict["binning_file_variable"] = self.dimension["name"]
             binned_spectra_dict["divide_by_bin_width"] = True
             binned_spectra_dict["xlabel"] = "keV"
             binned_spectra_dict["ylabel"] = "Count Per keV"
@@ -645,7 +647,9 @@ class BinnedConfigBuilder:
                         "name": self.param_names[i_param],
                         "shape_path": self.shapes_file,
                         "shape_format": "R counts",
-                        "shape_var_names": ["%s_%i"%(self.param_names[i_param],i_data)],
+                        "shape_var_names": ["%s_%i_%s"%
+                                            (self.param_names[i_param],i_data,
+                                             self.dimension["name"])],
                         "distribution_path": self.morpho_output_dir+"/"+\
                                              self.morpho_output_file+".root",
                         "distribution_format": "root values",
@@ -660,7 +664,7 @@ class BinnedConfigBuilder:
 
         which_plot = UnsortableOrderedDict()
         which_plot["which_plot"] = plotting
-        morpho_config_dict["which_plot"] = which_plot'''
+        morpho_config_dict["plot"] = which_plot
             
 
         return yaml.dump(morpho_config_dict, default_flow_style=False)

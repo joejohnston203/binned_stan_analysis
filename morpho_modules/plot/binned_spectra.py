@@ -156,6 +156,8 @@ class ReconstructSpectrumProcessor:
         self.make_data_plot = read_param(params, 'make_data_plot', True)
 
         self.binning_file = read_param(params, 'binning_file', None)
+        self.binning_file_format = read_param(params, 'binning_file_format', 'text')
+        self.binning_file_variable = read_param(params, 'binning_file_variable', ':')
         self.n_bins = read_param(params, 'n_bins', 50)
         self.divide_by_bin_width = read_param(params, 'divide_by_bin_width', True)
 
@@ -241,7 +243,9 @@ class ReconstructSpectrumProcessor:
 
         # Set up binnning
         try:
-            self.binning = read_txt_array(self.binning_file)
+            self.binning = get_variable_from_file(self.binning_file,
+                                                  self.binning_file_format,
+                                                  self.binning_file_variable)
         except Exception as e:
             try:
                 self.binning = np.linspace(self.xmin, self.xmax, self.n_bins+1)
