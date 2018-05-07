@@ -116,7 +116,7 @@ class BinnedConfigBuilder:
             (Default="data/binned_analysis/misc_config")
           - fake_data_output_dir: Output directory used to store fake data
             if generate_fake_data is True.
-            (Default="data/binned_analysis/fake_data.out")
+            (Default="data/binned_analysis/")
           - morpho_output_dir: Output directory used to store the
             outputs of morpho (Default="results")
           - morpho_output_file: Filename used to store the
@@ -333,7 +333,7 @@ class BinnedConfigBuilder:
                        "data/binned_analysis/misc_config")
         self.fake_data_output_dir = \
             read_param(paths_dict, 'fake_data_output_dir',
-                       "data/binned_analysis/fake_data.out")
+                       "data/binned_analysis/")
         self.morpho_output_dir = \
             read_param(paths_dict, 'morpho_output_dir', "results")
         self.morpho_output_file = \
@@ -348,11 +348,6 @@ class BinnedConfigBuilder:
 
         self.morpho_output_tree = \
             read_param(paths_dict, 'morpho_output_tree', "analysis_parameters")
-
-        self.shapes_file = self.shape_output_dir + "/shapes.out"
-        self.binning_file = self.shape_output_dir + "/binnings.out"
-        self.fake_data_file = self.fake_data_output_dir + "/fake_data.out"# add this later
-                
 
         self.stan_dict = read_param(params, 'stan', {})
         self.stan_dict["model"] = read_param(self.stan_dict, "model", "required")
@@ -414,7 +409,20 @@ class BinnedConfigBuilder:
         for data in self.data_sets:
             self.load_data_paths.append(read_param(data, 'load_data_path', None))
             self.load_data_formats.append(read_param(data, 'load_data_format', None))
+            if not self.generate_fake_data and not self.load_data_formats[-1]=="root values":
+                logger.error("Currently 'root values' is the only supported format for data."
+                             + "%s' is invalid."%self.load_data_formats[-1])
             self.load_data_variables.append(read_param(data, 'load_data_variable', None))
+
+        self.shapes_prefix = "data_set_"
+        self.shapes_files = []
+        self.binning_files = []
+        for i_data in range(self.num_data_sets):
+            self.shapes_files.append(self.shape_output_dir + "/" +
+                                     self.shapes_prefix + "%i_shapes.out"%i_data)
+            self.binning_files.append(self.shape_output_dir + "/" +
+                                      self.shapes_prefix + "%i_binnings.out"%i_data)
+        self.fake_data_file = self.fake_data_output_dir + "/fake_data.out"
 
         self.parameters = \
             read_param(params, 'parameters', 'required')
@@ -526,18 +534,19 @@ class BinnedConfigBuilder:
 
         # Preprocessing configuration
         preprocessing = []
-        
-        bin_shapes = UnsortableOrderedDict()
-        bin_shapes["module_name"] = "binned_shapes"
-        bin_shapes["method_name"] = "generate_shapes"
-        bin_shapes["generate_shapes"] = True
-        bin_shapes["output_dir"] = self.shape_output_dir
-        bin_shapes["output_path_prefix"] = ""
-        bin_shapes["output_format"] = "R"
-        bin_shapes["dimensions"] = [self.dimension]
-        bin_shapes_params = list()
-        for i_param in range(self.num_params):
-            for i_data in range(self.num_data_sets):
+
+        bin_shapes_dicts = []
+        for i_data in range(self.num_data_sets):
+            bin_shapes = UnsortableOrderedDict()
+            bin_shapes["module_name"] = "binned_shapes"
+            bin_shapes["method_name"] = "generate_shapes"
+            bin_shapes["generate_shapes"] = True
+            bin_shapes["output_dir"] = self.shape_output_dir
+            bin_shapes["output_path_prefix"] = "%s%i_"%(self.shapes_prefix,i_data)
+            bin_shapes["output_format"] = "R"
+            bin_shapes["dimensions"] = [self.dimension]
+            bin_shapes_params = list()
+            for i_param in range(self.num_params):
                 bin_shapes_params.append(
                     {
                         "name":"%s_%i"%(self.param_names[i_param],i_data),
@@ -545,7 +554,28 @@ class BinnedConfigBuilder:
                         "shapes":[self.param_shapes[i_param][i_data]]
                     }
                 )
-        bin_shapes["parameters"] = bin_shapes_params
+            # Put the shape of the fake data in the file
+            if not self.generate_fake_data:
+                bin_shapes_params.append(
+                    {
+                        "name":"%s%i"%(self.shapes_prefix,i_data),
+                        "regenerate":True,
+                        "shapes": [{
+                            "path": self.load_data_paths[i_data],
+                            "format": self.load_data_formats[i_data],
+                            "tree": self.load_data_variables[i_data][0],
+                            "branches": [self.load_data_variables[i_data][1]],
+                            "renormalize":False,
+                            "multiply_shape":1.0,
+                            "number_save_type": "int64"
+                        }]
+                    }
+                )
+                bin_shapes["binning_data_path"] = self.load_data_paths[i_data]
+                bin_shapes["binning_data_format"] = self.load_data_formats[i_data]
+                bin_shapes["binning_data_variables"] = self.load_data_variables[i_data]
+            bin_shapes["parameters"] = bin_shapes_params
+            bin_shapes_dicts.append(bin_shapes)
 
         fake_data_dicts = []
         if self.generate_fake_data:
@@ -556,14 +586,15 @@ class BinnedConfigBuilder:
                 fd_dict["output_dir"] = self.fake_data_output_dir
                 fd_dict["output_path_prefix"] = "fake_data"
                 fd_dict["output_format"] = "R"
-                fd_dict["output_variable"] = "fake_data_%i"%i_data
+                fd_dict["output_variable"] = "%s%i_%s"%(self.shapes_prefix,i_data,
+                                                        self.dimension["name"])
                 fd_params = list()
                 for i_param, p in enumerate(self.parameters):
                     fd_params.append({})
                     fd_params[-1]["name"] = self.param_names[i_param]
                     fd_params[-1]["magnitude"] = self.fake_data_magnitudes[i_param]
                     fd_params[-1]["shapes"] = [{
-                        "path": self.shapes_file,
+                        "path": self.shapes_files[i_data],
                         "format":"R",
                         "variables":"%s_%i_%s"%(self.param_names[i_param],
                                                 i_data, self.dimension["name"])
@@ -572,25 +603,25 @@ class BinnedConfigBuilder:
                 fake_data_dicts.append(fd_dict)
 
         which_prep = UnsortableOrderedDict()
-        which_prep["which_pp"] = [bin_shapes]+fake_data_dicts
+        which_prep["which_pp"] = bin_shapes_dicts+fake_data_dicts
         morpho_config_dict["preprocessing"] = which_prep
 
         # Stan configuration
+        stan_data_files = []
+        for i_data in range(self.num_data_sets):
+            stan_data_files.append(
+                {"name": self.shapes_files[i_data],
+                 "format":"R"})
+            stan_data_files.append(
+                {"name":self.binning_files[i_data],
+                    "format":"R"})
+        if self.generate_fake_data:
+            stan_data_files.append(
+                {"name":self.fake_data_file,
+                 "format":"R"})
+
         self.stan_dict["data"] = {
-            "files":[
-                {
-                    "name":self.shapes_file,
-                    "format":"R"
-                },
-                {
-                    "name":self.binning_file,
-                    "format":"R"
-                },
-                {
-                    "name":self.fake_data_file,
-                    "format":"R"
-                }
-            ],
+            "files": stan_data_files,
             "parameters":[
                 {
                     
@@ -629,7 +660,7 @@ class BinnedConfigBuilder:
             binned_spectra_dict["make_reconstruction_plot"] = True
             binned_spectra_dict["make_residual_plot"] = True
             binned_spectra_dict["make_data_plot"] = True
-            binned_spectra_dict["binning_file"] = self.binning_file
+            binned_spectra_dict["binning_file"] = self.binning_files[i_data]
             binned_spectra_dict["binning_file_format"] = "R"
             binned_spectra_dict["binning_file_variable"] = self.dimension["name"]
             binned_spectra_dict["divide_by_bin_width"] = True
@@ -637,15 +668,19 @@ class BinnedConfigBuilder:
             binned_spectra_dict["ylabel"] = "Count Per keV"
             binned_spectra_dict["ylog"] = False
             binned_spectra_dict["title_prefix"] = "Data Set %i "%i_data
-            binned_spectra_dict["data_path"] = self.fake_data_file
+            if self.generate_fake_data:
+                binned_spectra_dict["data_path"] = self.fake_data_file
+            else:
+                binned_spectra_dict["data_path"] = self.shapes_files[i_data]
             binned_spectra_dict["data_format"] = "R counts"
-            binned_spectra_dict["data_var_names"] = ["fake_data_%i"%i_data]
+            binned_spectra_dict["data_var_names"] = ["%s%i_%s"%(self.shapes_prefix,i_data,
+                                                                self.dimension["name"])]
             binned_spectra_dict["parameters"] = []
             for i_param in range(self.num_params):
                 binned_spectra_dict["parameters"].append(
                     {
                         "name": self.param_names[i_param],
-                        "shape_path": self.shapes_file,
+                        "shape_path": self.shapes_files[i_data],
                         "shape_format": "R counts",
                         "shape_var_names": ["%s_%i_%s"%
                                             (self.param_names[i_param],i_data,
@@ -676,7 +711,6 @@ class BinnedConfigBuilder:
             plotting.append(histo_dict)
 
         # Add correlation plots
-        # CONTINUE HERE
         apost_dict = UnsortableOrderedDict()
         apost_dict["method_name"] = "aposteriori_distribution"
         apost_dict["module_name"] = "histo"
@@ -754,7 +788,7 @@ class BinnedConfigBuilder:
                 "  int nBins_%s;\n\n"%d_name+\
                 "  // Fake Data\n"
         for i_data in range(self.num_data_sets):
-            model += "  int fake_data_%i[nBins_%s];\n"%(i_data,d_name)
+            model += "  int %s%i_%s[nBins_%s];\n"%(self.shapes_prefix, i_data, d_name, d_name)
         model += "\n"
         for i_data in range(self.num_data_sets):
             model += "  // Shapes for Data Set %i\n"%i_data
@@ -787,8 +821,8 @@ class BinnedConfigBuilder:
         model += "model {\n\n"
         model += "  for(i in 1:nBins_%s){\n"%d_name
         for i_data in range(self.num_data_sets):
-            model += "    target += poisson_lpmf(fake_data_%i[i] | n_counts_recon_%i[i]);\n"%\
-                     (i_data, i_data)
+            model += "    target += poisson_lpmf(%s%i_%s[i] | n_counts_recon_%i[i]);\n"%\
+                     (self.shapes_prefix,i_data, d_name,i_data)
         model += "  }\n\n}\n"
 
         return model

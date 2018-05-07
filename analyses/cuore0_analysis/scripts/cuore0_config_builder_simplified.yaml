@@ -4,13 +4,13 @@ generate_stan_model: True
 stan_model_output_path: "models/cuore0_analysis_simplified.stan"
 
 output_paths:
-  shape_output_dir: "morpho_data/shapes"
-  misc_config_output_dir: "morpho_data"
-  fake_data_output_dir: "morpho_data"
-  morpho_output_dir: "results"
+  shape_output_dir: "morpho_data_simplified/shapes"
+  misc_config_output_dir: "morpho_data_simplified"
+  fake_data_output_dir: "morpho_data_simplified"
+  morpho_output_dir: "results_simplified"
   morpho_output_file: "cuore_analysis_results"
-  plots_output_dir: "results/plots"
-  debug_dir: "results/debug"
+  plots_output_dir: "results_simplified/plots"
+  debug_dir: "results_simplified/debug"
 
 stan:
   name: "cuore_simplified_fit"
