@@ -95,13 +95,15 @@ def read_root_branch(file_path, tree_name, branch_name):
     """
     myfile = ROOT.TFile(file_path,"READ")
     tree = myfile.Get(tree_name)
+
     result = []
     for elt in tree:
         result.append(getattr(elt,branch_name))
+
     myfile.Close()
     return result
 
-def histogram_root_branch(binning, file_path, tree_name, branch_name):
+def histogram_root_branch(binning, file_path, tree_name, branch_name, cut=""):
     """Get and histogram a branch from a root file
 
     Args:
@@ -120,13 +122,16 @@ def histogram_root_branch(binning, file_path, tree_name, branch_name):
     myfile = ROOT.TFile(file_path,"READ")
     tree = myfile.Get(tree_name)
     rh = ROOT.TH1F("rh", "", len(binning)-1, binning)
-    tree.Draw(branch_name+">>rh", "", "goff")
+    tree.Draw(branch_name+">>rh", cut, "goff")
     mean = rh.GetMean()
     sigma = rh.GetStdDev()
     bin_contents = np.empty(len(binning)-1)
     for i in range(len(binning)-1):
         bin_contents[i] = rh.GetBinContent(i+1)
     myfile.Close()
+    logger.debug("\t\tFrom file %s:"%file_path)
+    logger.debug("\t\t\tBinned tree %s, branch %s, cut: %s"%
+                 (tree_name, branch_name, cut))
     return (bin_contents, mean, sigma)
 
 def read_R_variable(file_path, var_name):
@@ -248,7 +253,16 @@ def get_histo_shape_from_file(binning, path, file_format, variables,
         if "counts" in file_format or "values" in file_format:
             res_arr = read_txt_array(path, variables["columns"])
     elif "root" in file_format:
-        if "counts" in file_format or "values" in file_format:
+        if "values" in file_format:
+            if not "cut" in variables:
+                variables["cut"] = ""
+            binning = np.array(binning)
+            res_arr, mean, sigma = histogram_root_branch(binning, path,
+                                                         variables["tree"],
+                                                         variables["branches"][0],
+                                                         variables["cut"])
+            return np.array(res_arr), mean, sigma
+        elif "counts" in file_format:
             res_arr = get_variable_from_file(path, "root",
                                              [variables["tree"], variables["branches"][0]])
         elif "function" in file_format:

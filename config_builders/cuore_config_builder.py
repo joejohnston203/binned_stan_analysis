@@ -373,6 +373,7 @@ class BinnedConfigBuilder:
 
         self.dimension = \
             read_param(params, 'dimension', 'required')
+        self.dim_name = read_param(self.dimension, 'name', 'required')
         '''self.dim_names = []
         self.binning_types = []
         self.binning_paths = []
@@ -554,26 +555,31 @@ class BinnedConfigBuilder:
                         "shapes":[self.param_shapes[i_param][i_data]]
                     }
                 )
-            # Put the shape of the fake data in the file
+            # Put the shape of the data in the file
             if not self.generate_fake_data:
-                bin_shapes_params.append(
-                    {
-                        "name":"%s%i"%(self.shapes_prefix,i_data),
-                        "regenerate":True,
-                        "shapes": [{
-                            "path": self.load_data_paths[i_data],
-                            "format": self.load_data_formats[i_data],
-                            "tree": self.load_data_variables[i_data][0],
-                            "branches": [self.load_data_variables[i_data][1]],
-                            "renormalize":False,
-                            "multiply_shape":1.0,
-                            "number_save_type": "int64"
-                        }]
-                    }
-                )
                 bin_shapes["binning_data_path"] = self.load_data_paths[i_data]
                 bin_shapes["binning_data_format"] = self.load_data_formats[i_data]
                 bin_shapes["binning_data_variables"] = self.load_data_variables[i_data]
+                if self.load_data_formats[i_data]=="root values":
+                    if len(self.load_data_variables[i_data])<3:
+                        self.load_data_variables.append("") # Third element should be a cut
+                    bin_shapes_params.append(
+                        {
+                            "name":"%s%i"%(self.shapes_prefix,i_data),
+                            "regenerate":True,
+                            "shapes": [{
+                                "path": self.load_data_paths[i_data],
+                                "format": self.load_data_formats[i_data],
+                                "tree": self.load_data_variables[i_data][0],
+                                "branches": [self.load_data_variables[i_data][1]],
+                                "renormalize":False,
+                                "multiply_shape":1.0,
+                                "number_save_type": "int64"
+                            }]
+                        }
+                    )
+                else:
+                    logger.error("Currently 'root values' is the only supported data format")
             bin_shapes["parameters"] = bin_shapes_params
             bin_shapes_dicts.append(bin_shapes)
 
@@ -587,7 +593,7 @@ class BinnedConfigBuilder:
                 fd_dict["output_path_prefix"] = "fake_data"
                 fd_dict["output_format"] = "R"
                 fd_dict["output_variable"] = "%s%i_%s"%(self.shapes_prefix,i_data,
-                                                        self.dimension["name"])
+                                                        self.dim_name)
                 fd_params = list()
                 for i_param, p in enumerate(self.parameters):
                     fd_params.append({})
@@ -597,7 +603,7 @@ class BinnedConfigBuilder:
                         "path": self.shapes_files[i_data],
                         "format":"R",
                         "variables":"%s_%i_%s"%(self.param_names[i_param],
-                                                i_data, self.dimension["name"])
+                                                i_data, self.dim_name)
                     }]
                 fd_dict["parameters"] = fd_params
                 fake_data_dicts.append(fd_dict)
@@ -662,7 +668,7 @@ class BinnedConfigBuilder:
             binned_spectra_dict["make_data_plot"] = True
             binned_spectra_dict["binning_file"] = self.binning_files[i_data]
             binned_spectra_dict["binning_file_format"] = "R"
-            binned_spectra_dict["binning_file_variable"] = self.dimension["name"]
+            binned_spectra_dict["binning_file_variable"] = self.dim_name
             binned_spectra_dict["divide_by_bin_width"] = True
             binned_spectra_dict["xlabel"] = "keV"
             binned_spectra_dict["ylabel"] = "Count Per keV"
@@ -674,7 +680,7 @@ class BinnedConfigBuilder:
                 binned_spectra_dict["data_path"] = self.shapes_files[i_data]
             binned_spectra_dict["data_format"] = "R counts"
             binned_spectra_dict["data_var_names"] = ["%s%i_%s"%(self.shapes_prefix,i_data,
-                                                                self.dimension["name"])]
+                                                                self.dim_name)]
             binned_spectra_dict["parameters"] = []
             for i_param in range(self.num_params):
                 binned_spectra_dict["parameters"].append(
@@ -684,7 +690,7 @@ class BinnedConfigBuilder:
                         "shape_format": "R counts",
                         "shape_var_names": ["%s_%i_%s"%
                                             (self.param_names[i_param],i_data,
-                                             self.dimension["name"])],
+                                             self.dim_name)],
                         "distribution_path": self.morpho_output_dir+"/"+\
                                              self.morpho_output_file+".root",
                         "distribution_format": "root values",
@@ -779,7 +785,7 @@ class BinnedConfigBuilder:
         Returns:
             str: String containing the stan model code
         """
-        d_name = self.dimension["name"]
+        d_name = self.dim_name
         model = "/* CUORE analysis Stan model\n"+\
                 "* Automatically generated by BinnnedConfigBuilder object\n*/\n\n"+\
                 "functions {\n\n}\n\n"

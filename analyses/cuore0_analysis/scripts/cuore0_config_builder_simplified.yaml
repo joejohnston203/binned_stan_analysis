@@ -31,7 +31,7 @@ dimension:
   binning_variables : ":"
 
 generate_fake_data: True
-num_data_sets: 1
+num_data_sets: 3
 data:
   - load_data_path: None
     load_data_format: None
@@ -50,6 +50,19 @@ parameters:
         format : "root values"
         tree : "outTree"
         branches : ["Ener2"]
+        cut : "Multiplicity==1"
+      - path : "data/simulations/10mKFlan-u238_cnaf104.root"
+        renormalize : False
+        format : "root values"
+        tree : "outTree"
+        branches : ["Ener2"]
+        cut : "Multiplicity==2"
+      - path : "data/simulations/10mKFlan-u238_cnaf104.root"
+        renormalize : False
+        format : "root values"
+        tree : "outTree"
+        branches : ["ESum2"]
+        cut : "Multiplicity==2"
   - name : "p_10mKFlan_th232"
     magnitude: 500.
     lower_bound: 0.
@@ -60,6 +73,19 @@ parameters:
         format : "root values"
         tree : "outTree"
         branches : ["Ener2"]
+        cut : "Multiplicity==1"
+      - path : "data/simulations/10mKFlan-th232_cnaf103.root"
+        renormalize : False
+        format : "root values"
+        tree : "outTree"
+        branches : ["Ener2"]
+        cut : "Multiplicity==2"
+      - path : "data/simulations/10mKFlan-th232_cnaf103.root"
+        renormalize : False
+        format : "root values"
+        tree : "outTree"
+        branches : ["ESum2"]
+        cut : "Multiplicity==2"
 #  - name : "p_10mK_co60"
 #    magnitude: 1.0
 #    lower_bound: 0.

@@ -224,6 +224,8 @@ class GenerateShapesProcessor:
                         read_param(s, 'tree', 'required')
                     s["variables"]["branches"] = \
                         read_param(s, 'branches', 'required')
+                    s["variables"]["cut"] = \
+                        read_param(s, 'cut', "")
                 if "R" in param_format:
                     s["variables"]["variable_names"] = \
                         read_param(s, 'var_names', 'required')
