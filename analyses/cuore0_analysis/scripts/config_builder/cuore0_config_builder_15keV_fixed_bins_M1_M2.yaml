@@ -1,0 +1,2541 @@
+generate_morpho_config: True
+morpho_config_output_path: "scripts/cuore0_analysis_15keV_fixed_bins_M1_M2.yaml"
+generate_stan_model: True
+stan_model_output_path: "models/cuore0_analysis_15keV_fixed_bins_M1_M2.stan"
+
+output_paths:
+  shape_output_dir: "morpho_data/15keV_fixed_bins_M1_M2/shapes"
+  misc_config_output_dir: "morpho_data/15keV_fixed_bins_M1_M2"
+  fake_data_output_dir: "morpho_data/15keV_fixed_bins_M1_M2"
+  morpho_output_dir: "results/15keV_fixed_bins_M1_M2"
+  morpho_output_file: "cuore0_analysis_results_15keV_fixed_bins_M1_M2"
+  plots_output_dir: "results/15keV_fixed_bins_M1_M2/plots"
+  debug_dir: "results/15keV_fixed_bins_M1_M2/debug"
+
+stan:
+  name: "cuore_15keV_fixed_bins_M1_M2_fit"
+  model:
+    function_file: "functions"
+    cache: "cache"
+  run:
+    algorithm: "NUTS"
+    iter: 2000
+    warmup: 1000
+    chain: 1
+
+dimension:
+  name : "energy"
+  binning_type : "file"
+  binning_path : "data/binnings/Binning_M1_15keVFixed.txt"
+  binning_format : "text"
+  binning_variables : ":"
+
+generate_fake_data: False
+num_data_sets: 3
+data:
+  - load_data_path: "data/data_cuore0/Q0_Final_Reduced_Official_raw.root"
+    load_data_format: "root values"
+    load_data_variable: ["qtree_bkg","Energy", "Multiplicity==1"]
+  - load_data_path: "data/data_cuore0/Q0_Final_Reduced_Official_raw.root"
+    load_data_format: "root values"
+    load_data_variable: ["qtree_bkg","Energy", "Multiplicity==2"]
+  - load_data_path: "data/data_cuore0/Q0_Final_Reduced_Official_raw.root"
+    load_data_format: "root values"
+    load_data_variable: ["qtree_bkg","TotalEnergy", "Multiplicity==2"]
+
+parameters:
+ - name: "p_BotExtPb_1460keV"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/AdHoc/BotExtPb-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/AdHoc/BotExtPb-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/AdHoc/BotExtPb-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_Spot_1460keV"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/AdHoc/CuBox-Spot-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/AdHoc/CuBox-Spot-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/AdHoc/CuBox-Spot-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_10cmPb_u238"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/10cmPb-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/10cmPb-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/10cmPb-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_125SbTeO2_cnaf77_10M"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/125SbTeO2_cnaf77-10M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/125SbTeO2_cnaf77-10M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/125SbTeO2_cnaf77-10M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_130Te2nuIK_10M"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_130Te2nuIK_10M_TESTG2R"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG2R"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG2R"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG2R"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_130Te2nuIK_10M_TESTG2R363"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG2R363"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG2R363"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG2R363"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_130Te2nuIK_10M_TESTG4"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG4"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG4"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root_TESTG4"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_207Bi3cmPbExt_cnaf80_10G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/207Bi3cmPbExt_cnaf80-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/207Bi3cmPbExt_cnaf80-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/207Bi3cmPbExt_cnaf80-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_232Th10cmPbExt_cnaf108_100G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/232Th10cmPbExt_cnaf108-100G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/232Th10cmPbExt_cnaf108-100G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/232Th10cmPbExt_cnaf108-100G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+# - name: "p_238U10cmPbExt_cnaf109_100G"
+#   magnitude: 1.
+#   lower_bound: 0.
+#   upper_bound: 10000.
+#   shapes:
+#    - path: "data/simulations_cuore0/Bulk/238U10cmPbExt_cnaf109-100G.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==1"
+#    - path: "data/simulations_cuore0/Bulk/238U10cmPbExt_cnaf109-100G.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==2"
+#    - path: "data/simulations_cuore0/Bulk/238U10cmPbExt_cnaf109-100G.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["ESum2"]
+#      cut: "Multiplicity==2"
+
+ - name: "p_238U10cmPbExt_cnaf85_10G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/238U10cmPbExt_cnaf85-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/238U10cmPbExt_cnaf85-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/238U10cmPbExt_cnaf85-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_238UOVC_cnaf76_6_6G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/238UOVC_cnaf76-6.6G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/238UOVC_cnaf76-6.6G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/238UOVC_cnaf76-6.6G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_40K10cmPbExt_cnaf110_10G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/40K10cmPbExt_cnaf110-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/40K10cmPbExt_cnaf110-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/40K10cmPbExt_cnaf110-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_40KOVC_cnaf70_1G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/40KOVC_cnaf70-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/40KOVC_cnaf70-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/40KOVC_cnaf70-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50_600mK_pb210_1G_normSurf"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normSurf.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normSurf.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normSurf.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50_600mK_pb210_1G_normVol"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normVol.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normVol.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normVol.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50mK_cs137"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50mK-cs137.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50mK-cs137.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50mK-cs137.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50mK_pb210_1G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50mK-pb210-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50mK-pb210-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50mK-pb210-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50mK_pb210"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50mK-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50mK-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50mK-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50mK_th232"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50mK-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50mK-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50mK-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50mK_u238"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50mK-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50mK-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50mK-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_600mK_pb210_1G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/600mK-pb210-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/600mK-pb210-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/600mK-pb210-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_60CoOVC_cnaf71_1G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/60CoOVC_cnaf71-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/60CoOVC_cnaf71-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/60CoOVC_cnaf71-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_803keVPbExt_cnaf87_10G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/803keVPbExt_cnaf87-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/803keVPbExt_cnaf87-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/803keVPbExt_cnaf87-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_co57"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-co57.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-co57.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-co57.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_co60"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_k40"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_mn54"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-mn54.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-mn54.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-mn54.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_th232"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_u238"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/CuBox+CuFrame-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_ExtPb4cm_210BiBStot_1_23T"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm_210BiBStot-1.23T.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm_210BiBStot-1.23T.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm_210BiBStot-1.23T.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_ExtPb4cm_210Pb"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm-210Pb.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm-210Pb.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm-210Pb.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_Frame_Box_Tray_co60"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_Frame_Box_Tray_k40"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_Frame_Box_Tray_th232"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_Frame_Box_Tray_u238"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/Frame+Box+Tray-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_InternalShields_co60"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/InternalShields-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_InternalShields_cs137"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/InternalShields-cs137.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-cs137.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-cs137.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_InternalShields_k40"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/InternalShields-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_InternalShields_th232"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/InternalShields-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_InternalShields_u238"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/InternalShields-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_OVC_bi207"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/OVC-bi207.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/OVC-bi207.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/OVC-bi207.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_OVC_th232_cnaf10_10G"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/OVC-th232_cnaf10-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/OVC-th232_cnaf10-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/OVC-th232_cnaf10-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PbRom_Ag108m"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/PbRom-Ag108m.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/PbRom-Ag108m.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/PbRom-Ag108m.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PbRom_k40"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/PbRom-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/PbRom-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/PbRom-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PbRom_th232"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/PbRom-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/PbRom-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/PbRom-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PbRom_Tl202"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/PbRom-Tl202.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/PbRom-Tl202.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/PbRom-Tl202.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PbRom_u238"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/PbRom-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/PbRom-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/PbRom-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PTFE_th232"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/PTFE-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/PTFE-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/PTFE-th232.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PTFE_u238"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/PTFE-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/PTFE-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/PTFE-u238.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_1Majo"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-1Majo.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-1Majo.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-1Majo.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_2Majo"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-2Majo.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-2Majo.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-2Majo.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_co60"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-co60.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_k40"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_pb210"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_po210"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-po210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-po210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-po210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_pt190"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-pt190.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-pt190.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-pt190.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_ra226_pb210"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-ra226-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-ra226-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-ra226-pb210.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_ra228_pb208"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-ra228-pb208.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-ra228-pb208.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-ra228-pb208.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_th230_only"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-th230_only.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-th230_only.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-th230_only.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_th232_only"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-th232_only.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-th232_only.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-th232_only.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2_u238_th230"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/TeO2-u238-th230.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/TeO2-u238-th230.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/TeO2-u238-th230.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_232ThExtC0SingSource_cnaf40_41_490M"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Ext/232ThExtC0SingSource_cnaf40-41-490M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Ext/232ThExtC0SingSource_cnaf40-41-490M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Ext/232ThExtC0SingSource_cnaf40-41-490M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_ExtMuonsSph5_1G_2T_500M"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Ext/ExtMuonsSph5_1G-2T-500M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Ext/ExtMuonsSph5_1G-2T-500M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Ext/ExtMuonsSph5_1G-2T-500M.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_Th232_spot_CuBox"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Ext/Th232-spot-CuBox.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Ext/Th232-spot-CuBox.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Ext/Th232-spot-CuBox.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_50mK_pb210__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/50mK-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/50mK-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/50mK-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_600mK_pb210__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/600mK-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/600mK-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/600mK-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_210Pb__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-210Pb-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-210Pb-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-210Pb-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_210Pb__1"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-210Pb-.1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-210Pb-.1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-210Pb-.1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_232Th_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-232Th-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-232Th-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-232Th-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_232Th_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-232Th-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-232Th-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-232Th-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_238U_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-238U-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-238U-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-238U-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_238U_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-238U-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-238U-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-238U-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_pb210__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_pb210_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_pb210_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_pb210__1"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-.1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-.1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-pb210-.1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_th232_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-th232-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-th232-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-th232-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_th232_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_u238_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-u238-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-u238-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-u238-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_CuBox_CuFrame_u238_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBox+CuFrame-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+# - name: "p_CuBoxSx_CuFrame_th232_100_cnaf_100M"
+#   magnitude: 1.
+#   lower_bound: 0.
+#   upper_bound: 10000.
+#   shapes:
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-th232-100_cnaf-100M.ro#ot"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==1"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-th232-100_cnaf-100M.ro#ot"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==2"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-th232-100_cnaf-100M.ro#ot"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["ESum2"]
+#      cut: "Multiplicity==2"
+#
+# - name: "p_CuBoxSx_CuFrame_th232_10_cnaf_100M"
+#   magnitude: 1.
+#   lower_bound: 0.
+#   upper_bound: 10000.
+#   shapes:
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-th232-10_cnaf-100M.roo#t"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==1"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-th232-10_cnaf-100M.roo#t"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==2"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-th232-10_cnaf-100M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["ESum2"]
+#      cut: "Multiplicity==2"
+#
+# - name: "p_CuBoxSx_CuFrame_u238_100_cnaf_100M"
+#   magnitude: 1.
+#   lower_bound: 0.
+#   upper_bound: 10000.
+#   shapes:
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-u238-100_cnaf-100M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==1"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-u238-100_cnaf-100M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==2"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-u238-100_cnaf-100M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["ESum2"]
+#      cut: "Multiplicity==2"
+#
+# - name: "p_CuBoxSx_CuFrame_u238_10_cnaf_100M"
+#   magnitude: 1.
+#   lower_bound: 0.
+#   upper_bound: 10000.
+#   shapes:
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-u238-10_cnaf-100M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==1"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-u238-10_cnaf-100M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==2"
+#    - path: "data/simulations_cuore0/Sup/CuBoxSx+CuFrame-u238-10_cnaf-100M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["ESum2"]
+#      cut: "Multiplicity==2"
+
+ - name: "p_CuBoxSx_u238_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/CuBoxSx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/CuBoxSx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/CuBoxSx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PbRom_pb210__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/PbRom-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/PbRom-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/PbRom-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PTFESx_pb210_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/PTFESx-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/PTFESx-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/PTFESx-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PTFESx_th232_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/PTFESx-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/PTFESx-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/PTFESx-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_PTFESx_u238_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/PTFESx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/PTFESx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/PTFESx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_pb210__001"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-.001.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-.001.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-.001.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_pb210_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_pb210_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_pb210_1"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-pb210-1.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_ra226_pb210__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-ra226-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-ra226-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-ra226-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_ra228_pb208__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-ra228-pb208-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-ra228-pb208-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-ra228-pb208-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_th230_only__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th230_only-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th230_only-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th230_only-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_th232_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_th232_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_th232_only__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232_only-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232_only-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-th232_only-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_u238_100"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-100.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_u238_10"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-10.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+
+ - name: "p_TeO2Sx_u238_th230__01"
+   magnitude: 1.
+   lower_bound: 0.
+   upper_bound: 10000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-th230-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-th230-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/TeO2Sx-u238-th230-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
