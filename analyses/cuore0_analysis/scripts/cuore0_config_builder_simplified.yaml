@@ -4,13 +4,13 @@ generate_stan_model: True
 stan_model_output_path: "models/cuore0_analysis_simplified.stan"
 
 output_paths:
-  shape_output_dir: "morpho_data_simplified/shapes"
-  misc_config_output_dir: "morpho_data_simplified"
-  fake_data_output_dir: "morpho_data_simplified"
-  morpho_output_dir: "results_simplified"
-  morpho_output_file: "cuore_analysis_results"
-  plots_output_dir: "results_simplified/plots"
-  debug_dir: "results_simplified/debug"
+  shape_output_dir: "morpho_data/simplified/shapes"
+  misc_config_output_dir: "morpho_data/simplified"
+  fake_data_output_dir: "morpho_data/simplified"
+  morpho_output_dir: "results/simplified"
+  morpho_output_file: "cuore_analysis_simplified_results"
+  plots_output_dir: "results/simplified/plots"
+  debug_dir: "results/simplified/debug"
 
 stan:
   name: "cuore_simplified_fit"
@@ -44,7 +44,7 @@ parameters:
     upper_bound: 10000.
     shapes:
       - path : "data/simulations/10mKFlan-u238_cnaf104.root"
-        renormalize : True
+        renormalize : False
         #multiply_shape : 1.0
         #number_save_type : 'float64'
         format : "root values"
@@ -56,7 +56,7 @@ parameters:
     upper_bound: 10000.
     shapes:
       - path : "data/simulations/10mKFlan-th232_cnaf103.root"
-        renormalize : True
+        renormalize : False
         format : "root values"
         tree : "outTree"
         branches : ["Ener2"]

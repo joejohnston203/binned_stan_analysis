@@ -526,8 +526,8 @@ class BinnedConfigBuilder:
 
         # Morpho global configuration
         morpho = UnsortableOrderedDict()
-        morpho["do_stan"] = True
         morpho["do_preprocessing"] = True
+        morpho["do_stan"] = True
         morpho["do_plots"] = True
 
         morpho_config_dict["morpho"] = morpho

@@ -250,9 +250,9 @@ class ReconstructSpectrumProcessor:
             try:
                 self.binning = np.linspace(self.xmin, self.xmax, self.n_bins+1)
             except Exception as e:
-                print("Binning could not be created. Received error:")
-                print(e)
-                print("Exiting")
+                logger.error("Binning could not be created. Received error:")
+                logger.error(e)
+                logger.error("Exiting")
         self.bin_widths = []
         self.bin_centers = []
         for i in range(len(self.binning)-1):
