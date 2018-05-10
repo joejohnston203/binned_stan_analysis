@@ -653,6 +653,8 @@ class BinnedConfigBuilder:
             binned_spectra_dict["module_name"] = "binned_spectra"
             binned_spectra_dict["method_name"] = "reconstructed_spectrum"
             binned_spectra_dict["output_dir"] = self.plots_output_dir
+            binned_spectra_dict["individual_param_output_dir"] = self.plots_output_dir +\
+                                                                 "/param_reconstructions"
             binned_spectra_dict["output_path_prefix"] =  "data_set_%i_"%i_data
             binned_spectra_dict["plot_data"] = True
             binned_spectra_dict["make_individual_spectra"] = True
@@ -667,7 +669,7 @@ class BinnedConfigBuilder:
             binned_spectra_dict["divide_by_bin_width"] = True
             binned_spectra_dict["xlabel"] = "keV"
             binned_spectra_dict["ylabel"] = "Count Per keV"
-            binned_spectra_dict["ylog"] = False
+            binned_spectra_dict["ylog"] = True
             binned_spectra_dict["title_prefix"] = "Data Set %i "%i_data
             if self.generate_fake_data:
                 binned_spectra_dict["data_path"] = self.fake_data_file

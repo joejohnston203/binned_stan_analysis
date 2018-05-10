@@ -54,6 +54,9 @@ class ReconstructSpectrumProcessor:
             method
 
         output_dir: String specifying output directory
+        individual_param_output_dir: String specifying output directory
+            for plots of individual parameters. A separate directory
+            can be specified because there could be a lot of these plots.
         output_path_prefix: String specifying output path prefix
 
         plot_data: Boolean specifying whether data should be
@@ -145,6 +148,9 @@ class ReconstructSpectrumProcessor:
 
     def Configure(self, params):
         self.output_dir = read_param(params, 'output_dir', 'required')
+        self.individual_param_output_dir = read_param(params,
+                                                      'individual_param_output_dir',
+                                                      self.output_dir)
         self.output_path_prefix = read_param(params, 'output_path_prefix', 'required')
 
         self.plot_data = read_param(params, 'plot_data', True)
@@ -325,6 +331,8 @@ class ReconstructSpectrumProcessor:
         """Create the plots"""
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
+        if not os.path.exists(self.individual_param_output_dir):
+            os.makedirs(self.individual_param_output_dir)
 
         if(self.divide_by_bin_width):
             histo_plot_type = "histo_line"
@@ -340,7 +348,7 @@ class ReconstructSpectrumProcessor:
                 plot_args['ybounds'] = self.ybounds
             plot_curves([data_curve], output_path, "matplotlib",
                         xlabel=self.xlabel, ylabel=self.ylabel,
-                        title="Data",
+                        title=self.title_prefix+"Data",
                         xlog=self.xlog, ylog=self.ylog,
                         **plot_args)
 
@@ -355,14 +363,14 @@ class ReconstructSpectrumProcessor:
                 curves.append((self.binning,
                                p["distribution_average"]*p["shape"],
                                histo_plot_type, {"label":p["name"]}))
-                output_path = self.output_dir + "/" + \
+                output_path = self.individual_param_output_dir + "/" + \
                               self.output_path_prefix + "%s.png"%p["name"]
                 plot_args = {}
                 if not self.ybounds=="auto":
                     plot_args['ybounds'] = self.ybounds
                 plot_curves(curves, output_path, plotter="matplotlib",
                             xlabel=self.xlabel, ylabel=self.ylabel,
-                            title="Spectrum %s"%p["name"],
+                            title="%sSpectrum %s"%(self.title_prefix,p["name"]),
                             xlog=self.xlog, ylog=self.ylog,
                             **plot_args)
 
@@ -388,8 +396,10 @@ class ReconstructSpectrumProcessor:
                 plot_args['ybounds'] = self.ybounds
             plot_curves(curves, output_path, plotter="matplotlib",
                         xlabel=self.xlabel, ylabel=self.ylabel,
-                        title="Stacked Spectra",
+                        title=self.title_prefix+"Stacked Spectra",
                         xlog=self.xlog, ylog=self.ylog,
+                        legend_loc=None,
+                        legend_output_path=output_path[:-4]+"_legend.png",
                         **plot_args)
 
         if self.unstacked_spectra:
@@ -413,8 +423,10 @@ class ReconstructSpectrumProcessor:
                 plot_args['ybounds'] = self.ybounds
             plot_curves(curves, output_path, plotter="matplotlib",
                         xlabel=self.xlabel, ylabel=self.ylabel,
-                        title="Unstacked Spectra",
+                        title=self.title_prefix+"Unstacked Spectra",
                         xlog=self.xlog, ylog=self.ylog,
+                        legend_loc=None,
+                        legend_output_path=output_path[:-4]+"_legend.png",
                         **plot_args)
 
         if self.reconstruction_plot:
@@ -438,7 +450,7 @@ class ReconstructSpectrumProcessor:
                 plot_args['ybounds'] = self.ybounds
             plot_curves(curves, output_path, plotter="matplotlib",
                         xlabel=self.xlabel, ylabel=self.ylabel,
-                        title="Reconstructed Spectrum",
+                        title=self.title_prefix+"Reconstructed Spectrum",
                         xlog=self.xlog, ylog=self.ylog,
                         **plot_args)
 
@@ -459,13 +471,13 @@ class ReconstructSpectrumProcessor:
             curves.append((self.binning,(self.data_shape-total),
                            "histo_line", {"label":"Residual (Exp-Stan)"}))
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "reconstruction.png"
+                          self.output_path_prefix + "residual.png"
             plot_args = {"alpha":0.5}
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
             plot_curves(curves, output_path, plotter="matplotlib",
                         xlabel=self.xlabel, ylabel=self.ylabel,
-                        title="Reconstructed Spectrum",
+                        title=self.title_prefix+"Reconstructed Spectrum",
                         xlog=self.xlog, ylog=self.ylog,
                         **plot_args)
         return

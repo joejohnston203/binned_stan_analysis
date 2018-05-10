@@ -31,7 +31,8 @@ def mpl_plot_curves(curves, output_path,
                     ybounds=None, ylog=False,
                     colors=['black', 'blue', 'green', 'red', 'cyan',
                             'magenta', 'yellow', 'orange', 'purple'],
-                    alpha=1.0, legend_size=None):
+                    alpha=1.0, legend_size=None, legend_loc=0,
+                    legend_output_path=None):
     """Plot curves using matplotlib
 
     Args:
@@ -62,7 +63,7 @@ def mpl_plot_curves(curves, output_path,
     Returns:
         None: Stores a plot at the given path.
     """
-    fig = plt.figure()
+    figData = plt.figure()
 
     for i,c in enumerate(curves):
         try:
@@ -122,11 +123,6 @@ def mpl_plot_curves(curves, output_path,
         except Exception as e:
             logger.warn("While plotting curve %i, got exception %s"%(i,e))
 
-    if(not legend_size is None):
-        plt.legend(loc=0, prop={'size':legend_size})
-    else:
-        plt.legend(loc=0)
-
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -136,8 +132,31 @@ def mpl_plot_curves(curves, output_path,
     if(ylog):
         plt.gca().set_yscale('log')
 
-    plt.savefig(output_path)
-    fig.clf()
+    legend_dict = {}
+    if(not legend_size is None):
+        legend_dict['prop'] = {'size':legend_size}
+    if(legend_loc is None):
+        pass
+        # Need to update this to save the legend to legend_output_path
+        '''ax = plt.gca()
+        figData.savefig(output_path)
+        figData.clf()
+        handles, leg_labels = ax.get_legend_handles_labels()
+        fig_legend = plt.figure(figsize=(2,2))
+        axi = fig_legend.add_subplot(111)
+        fig_legend.legend(handles, leg_labels, loc='center', scatterpoints = 1)
+        axi.xaxis.set_visible(False)
+        axi.yaxis.set_visible(False)
+        if not legend_output_path is None:
+            fig_legend.savefig(legend_output_path)
+        else:
+            fig_legend.savefig(output_path+"_legend.png")
+        fig_legend.clf()'''
+    else:
+        legend_dict['loc'] = legend_loc
+        plt.legend(**legend_dict)
+    figData.savefig(output_path)
+    figData.clf()
     plt.close()
     return
 
@@ -148,7 +167,8 @@ def plot_curves(curves, output_path,
                 ybounds=None, ylog=False,
                 colors=['black', 'blue', 'green', 'red', 'cyan',
                         'magenta', 'yellow', 'orange', 'purple'],
-                alpha=1.0, legend_size=None):
+                alpha=1.0, legend_size=None,
+                legend_loc=0, legend_output_path=None):
     """Plot a histogram using matplotlib
 
     Args:
@@ -185,5 +205,6 @@ def plot_curves(curves, output_path,
         pass
     mpl_plot_curves(curves, output_path, xlabel, ylabel, title,
                     xbounds, xlog, ybounds, ylog,
-                    colors, alpha, legend_size)
+                    colors, alpha, legend_size,
+                    legend_loc, legend_output_path)
     return
