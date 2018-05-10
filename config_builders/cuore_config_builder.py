@@ -74,19 +74,14 @@ from morpho.utilities.reader import read_param
 #from morpho.utilities.file_reader import *
 #from morpho.utilities.file_writer import *
 
-class StringBuilder:
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.string = ""
-
-    def add_line(self, line, indent=0, indent_str="  "):
-        """
-        Add a string to the current line with the given
-        indent level, then add a newline character
-        """
-        self.string += indent*indent_str + line + "\n"
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 class BinnedConfigBuilder:
     """Generate a Morpho config file and Stan model
@@ -702,7 +697,7 @@ class BinnedConfigBuilder:
 
         # Add Histogram plot of each param distro
         if not os.path.exists(self.plots_output_dir + "/param_distros"):
-            os.makedirs(self.plots_output_dir + "/param_distros")
+            mkdir_p(self.plots_output_dir + "/param_distros")
         for i_param in range(self.num_params):
             p_name = self.param_names[i_param]
             histo_dict = UnsortableOrderedDict()
