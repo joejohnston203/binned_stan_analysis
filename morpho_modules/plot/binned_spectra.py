@@ -59,6 +59,10 @@ class ReconstructSpectrumProcessor:
             can be specified because there could be a lot of these plots.
         output_path_prefix: String specifying output path prefix
 
+        store_param_distros: Whether the mean and standard deviation of
+            each parameter distribution should be stored. (Default=True)
+        store_param_distros_dir: Path where param distros should be stored
+
         plot_data: Boolean specifying whether data should be
             included on plots (Default=True)
         make_individual_spectra: Boolean specifying whether plots
@@ -70,6 +74,14 @@ class ReconstructSpectrumProcessor:
             be saved with all spectra on the same plot, stacked such that
             the summed spectra should approximately add to the data.
             (Default=True)
+        make_reconstruction_plot: Whether a plot of the reconstructed
+            spectrum should be stored (Default=True)
+        make_residual_plot: Whether a plot of normalized residuals
+            should be stored. (Default=True)
+        make_data_model_ratio_plot: Whether a plot of the data to model
+            ratio should be stored. (Default=True)
+        make_pull_distribution_plot: Whether a plot of the distribution of
+            the pulls for each data point should be stored. (Default=True)
         make_data_plot: Whether a plot should be made containing only
             the data. (Default=True)
 
@@ -153,12 +165,18 @@ class ReconstructSpectrumProcessor:
                                                       self.output_dir)
         self.output_path_prefix = read_param(params, 'output_path_prefix', 'required')
 
+        self.store_param_distros = read_param(params, 'store_param_distros', True)
+        self.store_param_distros_dir = \
+            read_param(params, 'store_param_distros_dir', self.output_dir)
+
         self.plot_data = read_param(params, 'plot_data', True)
         self.individual_spectra = read_param(params, 'make_individual_spectra', True)
         self.stacked_spectra = read_param(params, 'make_stacked_spectra', True)
         self.unstacked_spectra = read_param(params, 'make_unstacked_spectra', True)
         self.reconstruction_plot = read_param(params, 'make_reconstruction_plot', True)
         self.residual_plot = read_param(params, 'make_residual_plot', True)
+        self.data_model_ratio_plot = read_param(params, 'make_data_model_ratio_plot', True)
+        self.pull_distribution_plot = read_param(params, 'make_pull_distribution_plot', True)
         self.make_data_plot = read_param(params, 'make_data_plot', True)
 
         self.binning_file = read_param(params, 'binning_file', None)
@@ -331,8 +349,21 @@ class ReconstructSpectrumProcessor:
         """Create the plots"""
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
+        if not os.path.exists(self.store_param_distros_dir):
+            os.makedirs(self.store_param_distros_dir)
         if not os.path.exists(self.individual_param_output_dir):
             os.makedirs(self.individual_param_output_dir)
+
+        if self.store_param_distros:
+            param_dist_file = open(self.store_param_distros_dir +
+                                   "/" + self.output_path_prefix +
+                                   "param_distributions.txt", 'w')
+            param_dist_file.write("Parameter_Name\tMean\tSigma\n")
+            for p in self.reconstructed_param_dicts:
+                param_dist_file.write("%s\t%.6e\t%.6e\n"%
+                                      (p["name"], p["distribution_average"],
+                                       p["distribution_sigma"]))
+            param_dist_file.close()
 
         if(self.divide_by_bin_width):
             histo_plot_type = "histo_line"
@@ -454,32 +485,35 @@ class ReconstructSpectrumProcessor:
                         xlog=self.xlog, ylog=self.ylog,
                         **plot_args)
 
-        if self.residual_plot:
-            if not self.ybounds=="auto":
-                plot_args['ybounds'] = self.ybounds
-            curves = []
-            total = np.zeros(len(self.binning)-1)
-            for i,p in enumerate(self.reconstructed_param_dicts):
-                total += p["distribution_average"]*p["shape"]
-            curves.append((self.binning, total,
-                           "histo_line",
-                           {"label":"Reconstructed Spectrum"}))
-            if self.plot_data:
-                curves.append((self.binning, self.data_shape,
+        if (self.residual_plot or self.data_model_ratio_plot or
+            self.pull_distribution_plot):
+
+            if(self.residual_plot):
+                if not self.ybounds=="auto":
+                    plot_args['ybounds'] = self.ybounds
+                curves = []
+                total = np.zeros(len(self.binning)-1)
+                for i,p in enumerate(self.reconstructed_param_dicts):
+                    total += p["distribution_average"]*p["shape"]
+                curves.append((self.binning, total,
                                "histo_line",
-                               {"label":"Data"}))
-            curves.append((self.binning,(self.data_shape-total),
-                           "histo_line", {"label":"Residual (Exp-Stan)"}))
-            output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "residual.png"
-            plot_args = {"alpha":0.5}
-            if not self.ybounds=="auto":
-                plot_args['ybounds'] = self.ybounds
-            plot_curves(curves, output_path, plotter="matplotlib",
-                        xlabel=self.xlabel, ylabel=self.ylabel,
-                        title=self.title_prefix+"Reconstructed Spectrum",
-                        xlog=self.xlog, ylog=self.ylog,
-                        **plot_args)
+                               {"label":"Reconstructed Spectrum"}))
+                if self.plot_data:
+                    curves.append((self.binning, self.data_shape,
+                                   "histo_line",
+                                   {"label":"Data"}))
+                curves.append((self.binning,(self.data_shape-total),
+                               "histo_line", {"label":"Residual (Exp-Stan)"}))
+                output_path = self.output_dir + "/" + \
+                              self.output_path_prefix + "residual.png"
+                plot_args = {"alpha":0.5}
+                if not self.ybounds=="auto":
+                    plot_args['ybounds'] = self.ybounds
+                plot_curves(curves, output_path, plotter="matplotlib",
+                            xlabel=self.xlabel, ylabel=self.ylabel,
+                            title=self.title_prefix+"Reconstructed Spectrum",
+                            xlog=self.xlog, ylog=self.ylog,
+                            **plot_args)
         return
 
 

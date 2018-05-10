@@ -657,11 +657,15 @@ class BinnedConfigBuilder:
                                                                  "/param_reconstructions"
             binned_spectra_dict["output_path_prefix"] =  "data_set_%i_"%i_data
             binned_spectra_dict["plot_data"] = True
+            binned_spectra_dict["store_param_distros"] = True
+            binned_spectra_dict["store_param_distros_dir"] = self.plots_output_dir
             binned_spectra_dict["make_individual_spectra"] = True
             binned_spectra_dict["make_stacked_spectra"] = True
             binned_spectra_dict["make_unstacked_spectra"] = True
             binned_spectra_dict["make_reconstruction_plot"] = True
             binned_spectra_dict["make_residual_plot"] = True
+            binned_spectra_dict["make_data_model_ratio_plot"] = True
+            binned_spectra_dict["make_pull_distribution_plot"] = True
             binned_spectra_dict["make_data_plot"] = True
             binned_spectra_dict["binning_file"] = self.binning_files[i_data]
             binned_spectra_dict["binning_file_format"] = "R"
