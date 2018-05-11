@@ -358,10 +358,14 @@ class ReconstructSpectrumProcessor:
             param_dist_file = open(self.store_param_distros_dir +
                                    "/" + self.output_path_prefix +
                                    "param_distributions.txt", 'w')
-            param_dist_file.write("Parameter_Name\tMean\tSigma\n")
+            col_width = 40
+            temp_str = str("Parameter_Name")[:col_width-2].ljust(col_width)
+            param_dist_file.write(temp_str+"Mean           Sigma\n")
             for p in self.reconstructed_param_dicts:
-                param_dist_file.write("%s\t%.6e\t%.6e\n"%
-                                      (p["name"], p["distribution_average"],
+                name_fixed_width = p["name"][:col_width-2].ljust(col_width)
+                param_dist_file.write("%s%.8e %.8e\n"%
+                                      (name_fixed_width,
+                                       p["distribution_average"],
                                        p["distribution_sigma"]))
             param_dist_file.close()
 

@@ -567,6 +567,7 @@ class BinnedConfigBuilder:
                                 "format": self.load_data_formats[i_data],
                                 "tree": self.load_data_variables[i_data][0],
                                 "branches": [self.load_data_variables[i_data][1]],
+                                "cut": self.load_data_variables[i_data][2],
                                 "renormalize":False,
                                 "multiply_shape":1.0,
                                 "number_save_type": "int64"
@@ -828,8 +829,10 @@ class BinnedConfigBuilder:
         model += "model {\n\n"
         model += "  for(i in 1:nBins_%s){\n"%d_name
         for i_data in range(self.num_data_sets):
-            model += "    target += poisson_lpmf(%s%i_%s[i] | n_counts_recon_%i[i]);\n"%\
-                     (self.shapes_prefix,i_data, d_name,i_data)
+            model += "    if(n_counts_recon_%i[i]>0){\n"%(i_data)+\
+                     "      target += poisson_lpmf(%s%i_%s[i] | n_counts_recon_%i[i]);\n"%\
+                     (self.shapes_prefix,i_data, d_name,i_data)+\
+                     "    }\n"
         model += "  }\n\n}\n"
 
         return model
