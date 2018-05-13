@@ -1,0 +1,224 @@
+generate_morpho_config: True
+morpho_config_output_path: "scripts/cuore0_analysis_fake_data_large_bkgs.yaml"
+generate_stan_model: True
+stan_model_output_path: "models/cuore0_analysis_fake_data_large_bkgs.stan"
+
+output_paths:
+  shape_output_dir: "morpho_data/fake_data_large_bkgs/shapes"
+  misc_config_output_dir: "morpho_data/fake_data_large_bkgs"
+  fake_data_output_dir: "morpho_data/fake_data_large_bkgs"
+  morpho_output_dir: "results/fake_data_large_bkgs"
+  morpho_output_file: "cuore_analysis_results_fake_data_large_bkgs"
+  plots_output_dir: "results/fake_data_large_bkgs/plots"
+  debug_dir: "results/fake_data_large_bkgs/debug"
+
+stan:
+  name: "cuore_fake_data_large_bkgs_fit"
+  model:
+    function_file: "functions"
+    cache: "cache"
+  run:
+    algorithm: "NUTS"
+    iter: 2000
+    warmup: 1000
+    chain: 1
+
+dimension:
+  name : "energy"
+  binning_type : "file"
+  binning_path : "data/binnings/Binning_M1_15keVFixed.txt"
+  binning_format : "text"
+  binning_variables : ":"
+
+generate_fake_data: True
+num_data_sets: 3
+data:
+  - load_data_path: None
+    load_data_format: None
+    load_data_variables: None
+
+parameters:
+# - name: "p_130Te2nuIK_10M"
+#   magnitude: 7.2628e-03
+#   lower_bound: 0.
+#   upper_bound: 1000.
+#   shapes:
+#    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==1"
+#    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["Ener2"]
+#      cut: "Multiplicity==2"
+#    - path: "data/simulations_cuore0/Bulk/130Te2nuIK-10M.root"
+#      renormalize: False
+#      format: "root values"
+#      tree: "outTree"
+#      branches: ["ESum2"]
+#      cut: "Multiplicity==2"
+ - name: "p_ExtPb4cm_210Pb"
+   magnitude: 1.3637e-01
+   lower_bound: 0.
+   upper_bound: 1000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm-210Pb.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm-210Pb.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/ExtPb4cm-210Pb.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+ - name: "p_40K10cmPbExt_cnaf110_10G"
+   magnitude: 8.5589e-02
+   lower_bound: 0.
+   upper_bound: 1000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/40K10cmPbExt_cnaf110-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/40K10cmPbExt_cnaf110-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/40K10cmPbExt_cnaf110-10G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+ - name: "p_PbRom_pb210__01"
+   magnitude: 8.2658e-02
+   lower_bound: 0.
+   upper_bound: 1000.
+   shapes:
+    - path: "data/simulations_cuore0/Sup/PbRom-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Sup/PbRom-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Sup/PbRom-pb210-.01.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+ - name: "p_InternalShields_k40"
+   magnitude: 5.2575e-02
+   lower_bound: 0.
+   upper_bound: 1000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/InternalShields-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/InternalShields-k40.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+ - name: "p_BotExtPb_1460keV"
+   magnitude: 5.1995e-02
+   lower_bound: 0.
+   upper_bound: 1000.
+   shapes:
+    - path: "data/simulations_cuore0/AdHoc/BotExtPb-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/AdHoc/BotExtPb-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/AdHoc/BotExtPb-1460keV.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+ - name: "p_50_600mK_pb210_1G_normSurf"
+   magnitude: 2.0402e-02
+   lower_bound: 0.
+   upper_bound: 1000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normSurf.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normSurf.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/50+600mK-pb210-1G-normSurf.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"
+ - name: "p_40KOVC_cnaf70_1G"
+   magnitude: 1.4385e-02
+   lower_bound: 0.
+   upper_bound: 1000.
+   shapes:
+    - path: "data/simulations_cuore0/Bulk/40KOVC_cnaf70-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==1"
+    - path: "data/simulations_cuore0/Bulk/40KOVC_cnaf70-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["Ener2"]
+      cut: "Multiplicity==2"
+    - path: "data/simulations_cuore0/Bulk/40KOVC_cnaf70-1G.root"
+      renormalize: False
+      format: "root values"
+      tree: "outTree"
+      branches: ["ESum2"]
+      cut: "Multiplicity==2"

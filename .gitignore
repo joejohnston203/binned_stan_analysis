@@ -11,3 +11,9 @@ build/*
 *.pkl
 *.out
 *.txt
+
+analyses/cuore0_analysis/scripts
+analyses/cuore0_analysis/models
+analyses/cuore0_analysis/results
+analyses/cuore0_analysis/data/data_cuore0
+analyses/cuore0_analysis/data/simulations_cuore0

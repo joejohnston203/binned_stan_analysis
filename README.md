@@ -6,7 +6,7 @@ Stan/morpho models to analyze the sensitivity of any experiment where the data c
   
   You will need to install root in order to have access to pyroot.
 
-  The files from morpho_modules need to be copied into morpho/morpho in the morpho installation.
+  The files from morpho_modules need to be copied into morpho/morpho before installing root.
   
 Directory Structure
 ======
@@ -26,6 +26,11 @@ Directory Structure
   analyses
 
     Contains folders for multiple sample analyses. Inside each analysis folder, there generally are the following folders. Note however, that each of these names are defined in the yaml file used by morpho, and the names can be changed if they are also changed in the yaml file.
+
+      scripts_config_builder
+
+      .yaml configuration files that will be used by a config builder to make a
+      Morpho script and a Stan model.
 
       scripts
 
@@ -74,7 +79,7 @@ The cuore-0 analysis creates a model that is the sum of many parameters, with ea
 
 The cuore config builder can be used to create the yaml file. cuore0_config_builder_simplified.yaml is a simplified file that referes only to shapes that are stored in the github repository. It can be used to generate a morpho config file and a stan model with the command:
 
-python ../../config_builders/cuore_config_builder.py -c scripts/cuore0_config_builder_simplified.yaml
+python ../../config_builders/cuore_config_builder.py -c scripts/config_builder/cuore0_config_builder_simplified.yaml
 
 This will create a morpho scripts, "scripts/cuore0_analysis_simplified.yaml", and a stan model, "models/cuore0_analysis_simplified.stan".
 
@@ -96,7 +101,7 @@ The ricochet_analysis folder contains scripts scripts that were used to predict
 the sensitivity of the Ricochet experiment for the case of 1D (time domain only)
 and 2D (time+energy) data. It currently is NOT set up to use the morpho_modules,
 and needs to be updated. Also, scripts currently are not working, and will need
-some debuggin to be fixed. The way it currently is intended to work is as follows:
+some debugging to be fixed. The way it currently is intended to work is as follows:
 
   Once you have created a yaml_script, the following commands run the analysis and create plots:
 
