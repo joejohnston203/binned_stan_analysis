@@ -187,6 +187,8 @@ class BinnedConfigBuilder:
         data: List of dictionaries, with one for each data set. Each
             parameter will be assigned to one data set. Each data set
             should contain the following fields:
+          - name: Name of the data set, used for storing and titling plots
+            (Default="Data_Set_i")
           - load_data_path: Path to data that will be loaded if
             generate_fake_data is False.
             (required if generate_fake_data==False)
@@ -349,7 +351,6 @@ class BinnedConfigBuilder:
         self.stan_dict["model"]["cache"] = \
             read_param(self.stan_dict, 'model.cache', "./cache")
 
-        print("self.generate_stan_model: %s"%self.generate_stan_model)
         if self.generate_stan_model:
             self.stan_dict["model"]["file"] = \
                 self.stan_model_output_path
@@ -399,10 +400,12 @@ class BinnedConfigBuilder:
         self.generate_fake_data = read_param(params, 'generate_fake_data', False)
         self.data_sets = read_param(params, 'data', 'required')
         self.num_data_sets = read_param(params, 'num_data_sets', 1)
+        self.data_set_names = []
         self.load_data_paths = []
         self.load_data_formats = []
         self.load_data_variables = []
-        for data in self.data_sets:
+        for i_data,data in enumerate(self.data_sets):
+            self.data_set_names.append(read_param(data, 'name', "Data_Set_%i"%i_data))
             self.load_data_paths.append(read_param(data, 'load_data_path', None))
             self.load_data_formats.append(read_param(data, 'load_data_format', None))
             if not self.generate_fake_data and not self.load_data_formats[-1]=="root values":
@@ -410,14 +413,13 @@ class BinnedConfigBuilder:
                              + "%s' is invalid."%self.load_data_formats[-1])
             self.load_data_variables.append(read_param(data, 'load_data_variable', None))
 
-        self.shapes_prefix = "data_set_"
         self.shapes_files = []
         self.binning_files = []
         for i_data in range(self.num_data_sets):
             self.shapes_files.append(self.shape_output_dir + "/" +
-                                     self.shapes_prefix + "%i_shapes.out"%i_data)
+                                     self.data_set_names[i_data] + "_shapes.out")
             self.binning_files.append(self.shape_output_dir + "/" +
-                                      self.shapes_prefix + "%i_binnings.out"%i_data)
+                                      self.data_set_names[i_data] + "_binnings.out")
         self.fake_data_file = self.fake_data_output_dir + "/fake_data.out"
 
         self.parameters = \
@@ -538,7 +540,7 @@ class BinnedConfigBuilder:
             bin_shapes["method_name"] = "generate_shapes"
             bin_shapes["generate_shapes"] = True
             bin_shapes["output_dir"] = self.shape_output_dir
-            bin_shapes["output_path_prefix"] = "%s%i_"%(self.shapes_prefix,i_data)
+            bin_shapes["output_path_prefix"] = self.data_set_names[i_data] + "_"
             bin_shapes["output_format"] = "R"
             bin_shapes["dimensions"] = [self.dimension]
             bin_shapes_params = list()
@@ -560,7 +562,7 @@ class BinnedConfigBuilder:
                         self.load_data_variables.append("") # Third element should be a cut
                     bin_shapes_params.append(
                         {
-                            "name":"%s%i"%(self.shapes_prefix,i_data),
+                            "name":self.data_set_names[i_data],
                             "regenerate":True,
                             "shapes": [{
                                 "path": self.load_data_paths[i_data],
@@ -588,7 +590,7 @@ class BinnedConfigBuilder:
                 fd_dict["output_dir"] = self.fake_data_output_dir
                 fd_dict["output_path_prefix"] = "fake_data"
                 fd_dict["output_format"] = "R"
-                fd_dict["output_variable"] = "%s%i_%s"%(self.shapes_prefix,i_data,
+                fd_dict["output_variable"] = "%s_%s"%(self.data_set_names[i_data],
                                                         self.dim_name)
                 fd_params = list()
                 for i_param, p in enumerate(self.parameters):
@@ -656,7 +658,7 @@ class BinnedConfigBuilder:
             binned_spectra_dict["output_dir"] = self.plots_output_dir
             binned_spectra_dict["individual_param_output_dir"] = self.plots_output_dir +\
                                                                  "/param_reconstructions"
-            binned_spectra_dict["output_path_prefix"] =  "data_set_%i_"%i_data
+            binned_spectra_dict["output_path_prefix"] =  self.data_set_names[i_data]+"_"
             binned_spectra_dict["plot_data"] = True
             binned_spectra_dict["store_param_distros"] = True
             binned_spectra_dict["store_param_distros_dir"] = self.plots_output_dir
@@ -664,6 +666,7 @@ class BinnedConfigBuilder:
             binned_spectra_dict["make_stacked_spectra"] = True
             binned_spectra_dict["make_unstacked_spectra"] = True
             binned_spectra_dict["make_reconstruction_plot"] = True
+            binned_spectra_dict["make_diff_plot"] = True
             binned_spectra_dict["make_residual_plot"] = True
             binned_spectra_dict["make_data_model_ratio_plot"] = True
             binned_spectra_dict["make_pull_distribution_plot"] = True
@@ -672,17 +675,17 @@ class BinnedConfigBuilder:
             binned_spectra_dict["binning_file_format"] = "R"
             binned_spectra_dict["binning_file_variable"] = self.dim_name
             binned_spectra_dict["divide_by_bin_width"] = True
-            binned_spectra_dict["xlabel"] = "keV"
-            binned_spectra_dict["ylabel"] = "Count Per keV"
+            binned_spectra_dict["xlabel"] = "Energy (keV)"
+            binned_spectra_dict["ylabel"] = "Counts/keV"
             binned_spectra_dict["ylog"] = True
-            binned_spectra_dict["title_prefix"] = "Data Set %i "%i_data
+            binned_spectra_dict["title_prefix"] = self.data_set_names[i_data] + " "
             if self.generate_fake_data:
                 binned_spectra_dict["data_path"] = self.fake_data_file
             else:
                 binned_spectra_dict["data_path"] = self.shapes_files[i_data]
             binned_spectra_dict["data_format"] = "R counts"
-            binned_spectra_dict["data_var_names"] = ["%s%i_%s"%(self.shapes_prefix,i_data,
-                                                                self.dim_name)]
+            binned_spectra_dict["data_var_names"] = ["%s_%s"%(self.data_set_names[i_data],
+                                                              self.dim_name)]
             binned_spectra_dict["parameters"] = []
             for i_param in range(self.num_params):
                 binned_spectra_dict["parameters"].append(
@@ -796,10 +799,10 @@ class BinnedConfigBuilder:
                 "  int nBins_%s;\n\n"%d_name+\
                 "  // Fake Data\n"
         for i_data in range(self.num_data_sets):
-            model += "  int %s%i_%s[nBins_%s];\n"%(self.shapes_prefix, i_data, d_name, d_name)
+            model += "  int %s_%s[nBins_%s];\n"%(self.data_set_names[i_data], d_name, d_name)
         model += "\n"
         for i_data in range(self.num_data_sets):
-            model += "  // Shapes for Data Set %i\n"%i_data
+            model += "  // %s Shapes \n"%self.data_set_names[i_data]
             for p_name in self.param_names:
                 model += "  vector[nBins_%s] %s_%i_%s;\n"%(d_name,p_name,i_data,d_name)
             model += "\n"
@@ -830,8 +833,8 @@ class BinnedConfigBuilder:
         model += "  for(i in 1:nBins_%s){\n"%d_name
         for i_data in range(self.num_data_sets):
             model += "    if(n_counts_recon_%i[i]>0){\n"%(i_data)+\
-                     "      target += poisson_lpmf(%s%i_%s[i] | n_counts_recon_%i[i]);\n"%\
-                     (self.shapes_prefix,i_data, d_name,i_data)+\
+                     "      target += poisson_lpmf(%s_%s[i] | n_counts_recon_%i[i]);\n"%\
+                     (self.data_set_names[i_data], d_name,i_data)+\
                      "    }\n"
         model += "  }\n\n}\n"
 
