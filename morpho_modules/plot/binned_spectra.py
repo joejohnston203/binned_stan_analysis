@@ -84,6 +84,8 @@ class ReconstructSpectrumProcessor:
             ratio should be stored. (Default=True)
         make_pull_distribution_plot: Whether a plot of the distribution of
             the pulls for each data point should be stored. (Default=True)
+        make_chi2_vs_dof_plot: Whether a plot of the chi2 value vs the
+            degrees of freedom should be stored. (Default=True)
         make_data_plot: Whether a plot should be made containing only
             the data. (Default=True)
 
@@ -180,6 +182,7 @@ class ReconstructSpectrumProcessor:
         self.residual_plot = read_param(params, 'make_residual_plot', True)
         self.data_model_ratio_plot = read_param(params, 'make_data_model_ratio_plot', True)
         self.pull_distribution_plot = read_param(params, 'make_pull_distribution_plot', True)
+        self.chi2_vs_dof_plot = read_param(params, 'make_chi2_vs_dof_plot', True)
         self.make_data_plot = read_param(params, 'make_data_plot', True)
 
         self.binning_file = read_param(params, 'binning_file', None)
@@ -509,7 +512,7 @@ class ReconstructSpectrumProcessor:
                         xlog=self.xlog, ylog=self.ylog, colors=colors,
                         **plot_args)
 
-        if (self.diff_plot):
+        if self.diff_plot:
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
             curves = []
@@ -539,9 +542,46 @@ class ReconstructSpectrumProcessor:
                         xlog=self.xlog, ylog=False, colors=colors,
                         **plot_args)
 
-        if (self.residual_plot or self.data_model_ratio_plot or
-            self.pull_distribution_plot):
+        if self.residual_plot:
             pass
+
+        if self.data_model_ratio_plot:
+            pass
+
+        if self.pull_distribution_plot:
+            pass
+
+        if(self.chi2_vs_dof_plot):
+            plot_args['ybounds'] = (0., len(self.data_shape))
+            curves = []
+            colors = []
+            chi2_vals = [0.]
+            chi2 = 0.
+            print("len(self.data_shape): %s"%len(self.data_shape))
+            for i_bin in range(len(self.data_shape)):
+                diff2 = (self.data_shape[i_bin]-self.tot_recon[i_bin])**2
+                sigma2 = (self.tot_recon_errors[i_bin]+self.data_errors[i_bin])**2
+                if(np.isclose(sigma2,0.)):
+                    if(np.isclose(diff2,0.)):
+                        chi2 += 1.
+                    else:
+                        print("chi2 cannot be calculated for sigma2==%.3e, diff2==%.3e"%
+                              (sigma2, diff2))
+                        chi2 += float("inf")
+                else:
+                    chi2 += diff2/sigma2
+                chi2_vals.append(chi2)
+            chi2_vals = np.array(chi2_vals)
+            dof = np.array(range(len(self.data_shape)+1))
+            curves.append((dof, dof, "default", {"color":"red"}))
+            curves.append((dof, chi2_vals, "default",
+                           {"marker":"*", "color":"black"}))
+            output_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "chi2_vs_dof.png"
+            plot_curves(curves, output_path, plotter="matplotlib",
+                        xlabel="d.o.f. (n bins)", ylabel="Chi-2",
+                        title=self.title_prefix+"Chi-Squared vs d.o.f.",
+                        xlog=False, ylog=False, **plot_args)
 
         return
 
