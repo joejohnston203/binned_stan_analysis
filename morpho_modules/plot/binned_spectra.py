@@ -289,10 +289,14 @@ class ReconstructSpectrumProcessor:
 
         # Get data shape
         if(self.plot_data or self.make_data_plot):
-            self.data_shape = self._get_histogram(self.data_path, self.data_format,
-                                                  self.data_variables)[0]
+            data_info = self._get_histogram(self.data_path, self.data_format,
+                                            self.data_variables)
+            self.data_shape = data_info[0]
+            self.data_errors = data_info[3]
 
-        # Get parameter shapes and distributions
+        # Get parameter shapes, distributions, and the total reconstruction
+        self.tot_recon = np.zeros(len(self.binning)-1)
+        self.tot_recon_errors = np.zeros(len(self.binning)-1) # sum errors in quadrature
         for p in self.reconstructed_param_dicts:
             p["shape"] = self._get_histogram(p["shape_path"],
                                              p["shape_format"],
@@ -307,6 +311,10 @@ class ReconstructSpectrumProcessor:
                                                           p["distribution_variables"])
             p["distribution_average"] = temp_distribution[1]
             p["distribution_sigma"] = temp_distribution[2]
+            self.tot_recon += p["shape"]*p["distribution_average"]
+            self.tot_recon_errors += (p["shape"]*p["distribution_sigma"])**2
+        self.tot_recon_errors = np.sqrt(self.tot_recon_errors)
+
         return
 
     def _get_histogram(self, path, file_format, variables):
@@ -322,9 +330,11 @@ class ReconstructSpectrumProcessor:
             See morpho.file_reader.get_histo_shape_from_file docstring
 
         Returns:
-            list of length (len(binning)-1), specifying either the
+            4-tuple. First element is a list of length
+            (len(binning)-1), specifying either the
             counts per unit x for each bin, or the total number of
-            counts in each bin.
+            counts in each bin. Second is the average, third is sigma,
+            fourth is the poisson error bar in each bin.
         """
         (histo, avg, sigma) = get_histo_shape_from_file(self.binning, path,
                                                         file_format, variables)
@@ -334,15 +344,17 @@ class ReconstructSpectrumProcessor:
             logger.warn("Bin widths: %s"%self.bin_width)
             logger.warn("Histogram: %s"%histo)
             logger.warn("Returning histogram")
-            return histo
+            return (histo, avg, sigma, histo*0.0)
 
         if self.divide_by_bin_width:
             if "counts" in file_format or "values" in file_format:
                 histo = histo/self.bin_widths
+            histo_pois = np.sqrt(histo*self.bin_widths)/self.bin_widths
         else:
             if "function" in file_format:
                 histo = histo*self.bin_widths
-        return (histo, avg, sigma)
+            histo_pois = np.sqrt(histo)
+        return (histo, avg, sigma, histo_pois)
 
     def Run(self):
         """Create the plots"""
@@ -374,7 +386,8 @@ class ReconstructSpectrumProcessor:
             histo_plot_type = "histo_points"
 
         if self.make_data_plot:
-            data_curve = (self.binning, self.data_shape, histo_plot_type, {})
+            data_curve = (self.binning, self.data_shape, "histo_error",
+                          {"yerr":self.data_errors})
             output_path = self.output_dir + "/" + \
                           self.output_path_prefix + "data.png"
             plot_args = {"alpha":1.0}
@@ -394,11 +407,14 @@ class ReconstructSpectrumProcessor:
                 colors = []
                 if self.plot_data:
                     curves.append((self.binning, self.data_shape,
-                                   histo_plot_type, {"label":"Data"}))
+                                   "histo_error",
+                                   {"label":"Data", "yerr":self.data_errors}))
                     colors.append('blue')
                 curves.append((self.binning,
                                p["distribution_average"]*p["shape"],
-                               histo_plot_type, {"label":p["name"]}))
+                               "histo_error",
+                               {"label":p["name"],
+                                "yerr":p["distribution_sigma"]*p["shape"]}))
                 colors.append('red')
                 output_path = self.individual_param_output_dir + "/" + \
                               self.output_path_prefix + "%s.png"%p["name"]
@@ -471,17 +487,16 @@ class ReconstructSpectrumProcessor:
                 plot_args['ybounds'] = self.ybounds
             curves = []
             colors = []
-            total = np.zeros(len(self.binning)-1)
-            for i,p in enumerate(self.reconstructed_param_dicts):
-                total += p["distribution_average"]*p["shape"]
             if self.plot_data:
                 curves.append((self.binning, self.data_shape,
-                               "histo_line",
-                               {"label":"Data"}))
+                               "histo_error",
+                               {"label":"Data",
+                                "yerr":self.data_errors}))
                 colors.append('blue')
-            curves.append((self.binning, total,
-                           "histo_line",
-                           {"label":"Reconstruction"}))
+            curves.append((self.binning, self.tot_recon,
+                           "histo_error",
+                           {"label":"Reconstruction",
+                            "yerr":self.tot_recon_errors}))
             colors.append('red')
             output_path = self.output_dir + "/" + \
                           self.output_path_prefix + "reconstruction.png"
@@ -499,19 +514,18 @@ class ReconstructSpectrumProcessor:
                 plot_args['ybounds'] = self.ybounds
             curves = []
             colors = []
-            total = np.zeros(len(self.binning)-1)
-            for i,p in enumerate(self.reconstructed_param_dicts):
-                total += p["distribution_average"]*p["shape"]
             if self.plot_data:
                 curves.append((self.binning, self.data_shape,
-                               "histo_line",
-                               {"label":"Data"}))
+                               "histo_error",
+                               {"label":"Data",
+                                "yerr":self.data_errors}))
                 colors.append('blue')
-            curves.append((self.binning, total,
-                           "histo_line",
-                           {"label":"Reconstruction"}))
+            curves.append((self.binning, self.tot_recon,
+                           "histo_error",
+                           {"label":"Reconstruction",
+                            "yerr":self.tot_recon_errors}))
             colors.append('red')
-            curves.append((self.binning,(self.data_shape-total),
+            curves.append((self.binning,(self.data_shape-self.tot_recon),
                            "histo_line", {"label":"Diff (Data-Recon)"}))
             colors.append('black')
             output_path = self.output_dir + "/" + \

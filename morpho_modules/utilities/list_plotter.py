@@ -89,9 +89,9 @@ def mpl_plot_curves(curves, output_path,
                 plt.plot(xpts, histo_ypts, ls='steps', **opts)
             elif(c_type=="histo_points"):
                 bin_centers = []
-                for i in range(len(xpts)-1):
-                    bin_centers.append(xpts[i]+
-                                       (xpts[i+1]-xpts[i])/2.0)
+                for j in range(len(xpts)-1):
+                    bin_centers.append(xpts[j]+
+                                       (xpts[j+1]-xpts[j])/2.0)
                 histo_ypts = np.append(min(ypts), ypts)
                 temp_opts = copy.deepcopy(opts)
                 temp_opts["marker"] = "None"
@@ -103,19 +103,21 @@ def mpl_plot_curves(curves, output_path,
                 plt.plot(bin_centers, ypts, **temp_opts)
             elif(c_type=="histo_error"):
                 bin_centers = []
-                for i in range(len(xpts)-1):
-                    bin_centers.append(xpts[i]+
-                                       (xpts[i+1]-xpts[i])/2.0)
+                for j in range(len(xpts)-1):
+                    bin_centers.append(xpts[j]+
+                                       (xpts[j+1]-xpts[j])/2.0)
                 histo_ypts = np.append(min(ypts), ypts)
                 temp_opts = copy.deepcopy(opts)
+                temp_opts.pop("xerr", None)
+                temp_opts.pop("yerr", None)
                 temp_opts["marker"] = "None"
                 plt.plot(xpts, histo_ypts, ls='steps', **temp_opts)
                 temp_opts = copy.deepcopy(opts)
                 temp_opts["linestyle"] = "None"
+                temp_opts.pop("label", None)
                 if not "marker" in temp_opts:
-                    temp_opts["marker"] = '*'
-                plt.plot(bin_centers, ypts, **temp_opts)
-                print("Plotting a histo with error bars not yet implemented- Just plots with *")
+                    temp_opts["marker"] = "None"
+                plt.errorbar(bin_centers, ypts, **temp_opts)
             else:
                 if not c_type=="default":
                     logger.info("Invalid curve type. Using plt.plot")
