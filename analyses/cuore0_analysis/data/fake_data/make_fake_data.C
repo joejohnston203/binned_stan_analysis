@@ -2,16 +2,15 @@
 
 void make_fake_data() {
   // The simulations and normalizations used to make the fake data
-  static const int nFiles = 4;
-  TString simDir = "simulations/";
-  TString filenames [nFiles] = {"10mK-co60_cnaf113.root",
-				"10mK-k40_cnaf121.root",
-				"10mKFlan-th232_cnaf103.root",
+  static const int nFiles = 2;
+  TString simDir = "../simulations/";
+  TString filenames [nFiles] = {"10mKFlan-th232_cnaf103.root",
 				"10mKFlan-u238_cnaf104.root"};
-  double normalization [nFiles] = {0.00005, 0.001, 0.05, 0.1};
+  double normalization [nFiles] = {0.1, 0.4};
 
+  TString outFileName = "fake_data_2_sim.root";
   TString treeName = "outTree";
-  TString tempFilePrefix = "temp_tree_less_elts_";
+  TString tempFilePrefix = "temp_file_delete_me_";
 
   
   TFile * files [nFiles];
@@ -39,7 +38,7 @@ void make_fake_data() {
     tempfiles[i]->Close();
   }
 
-  TFile *newfile = new TFile("fake_data.root","recreate");
+  TFile *newfile = new TFile(outFileName,"recreate");
   TChain *ch = new TChain(treeName);
   
   for(int i=0; i<nFiles; i++){

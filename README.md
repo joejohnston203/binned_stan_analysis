@@ -93,6 +93,8 @@ This will do the following:
   - Run a stan model that fits for the magnitude of each parameter
   - Generate plots of the spectra and other useful quantities
 
+The jags_comparison folder contains scripts that can be run using the JagsBkgAnalysis
+code, and then compared to the output of the stan code
 
 Ricochet Analysis
 ======
