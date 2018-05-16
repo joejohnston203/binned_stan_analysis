@@ -36,6 +36,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from morpho.utilities.reader import read_param
 from morpho.utilities.list_plotter import plot_curves
@@ -78,12 +79,10 @@ class ReconstructSpectrumProcessor:
             spectrum should be stored (Default=True)
         make_diff_plot: Whether a plot of the data, reconstructed
             spectrum, and the difference should be stored (Default=True)
-        make_residual_plot: Whether a plot of normalized residuals
-            should be stored. (Default=True)
+        make_residual_pull_plot: Whether a plot of normalized residuals
+            and the pull histogram should be stored. (Default=True)
         make_data_model_ratio_plot: Whether a plot of the data to model
             ratio should be stored. (Default=True)
-        make_pull_distribution_plot: Whether a plot of the distribution of
-            the pulls for each data point should be stored. (Default=True)
         make_chi2_vs_dof_plot: Whether a plot of the chi2 value vs the
             degrees of freedom should be stored. (Default=True)
         make_data_plot: Whether a plot should be made containing only
@@ -179,9 +178,8 @@ class ReconstructSpectrumProcessor:
         self.unstacked_spectra = read_param(params, 'make_unstacked_spectra', True)
         self.reconstruction_plot = read_param(params, 'make_reconstruction_plot', True)
         self.diff_plot = read_param(params, 'make_diff_plot', True)
-        self.residual_plot = read_param(params, 'make_residual_plot', True)
+        self.residual_pull_plot = read_param(params, 'make_residual_pull_plot', True)
         self.data_model_ratio_plot = read_param(params, 'make_data_model_ratio_plot', True)
-        self.pull_distribution_plot = read_param(params, 'make_pull_distribution_plot', True)
         self.chi2_vs_dof_plot = read_param(params, 'make_chi2_vs_dof_plot', True)
         self.make_data_plot = read_param(params, 'make_data_plot', True)
 
@@ -542,31 +540,63 @@ class ReconstructSpectrumProcessor:
                         xlog=self.xlog, ylog=False, colors=colors,
                         **plot_args)
 
-        if self.residual_plot:
-            pass
+        if self.residual_pull_plot:
+            pulls = []
+
+            plt.subplot(1, 2, 1)
+            plot_args = {}
+            for i_bin in range(len(self.bin_centers)):
+                pulls.append((self.data_shape[i_bin]-self.tot_recon[i_bin])/
+                             np.sqrt(self.tot_recon_errors[i_bin]**2+self.data_errors[i_bin]**2))
+            curves = [((self.bin_centers), np.array(pulls), "default",
+                       {"marker":"^", "color":"black", "linestyle":"None"})]
+            plot_curves(curves, None, plotter="matplotlib",
+                        xlabel=self.xlabel, ylabel="N Sigma",
+                        title=self.title_prefix+"(Data-Recon)/Sigma",
+                        xlog=False, ylog=False, subplot=True, **plot_args)
+
+            plt.subplot(1, 2, 2)
+            curves = []
+            (pulls_hist, pulls_hist_edges) = \
+                np.histogram(pulls, bins=20, range=(-4, 4))
+            curves.append((pulls_hist_edges, pulls_hist, "histo_error",
+                           {"yerr":np.sqrt(pulls_hist), "color":"black"}))
+            def norm_gauss(x):
+                return np.exp(-x**2/2.)/np.sqrt(2.*np.pi)
+            norm_gauss = np.vectorize(norm_gauss)
+            x_pts = np.linspace(pulls_hist_edges[0], pulls_hist_edges[-1])
+            y_pts = norm_gauss(x_pts)*len(pulls)*\
+                    (pulls_hist_edges[1]-pulls_hist_edges[0])
+            curves.append((x_pts, y_pts, "default",
+                           {"color":"red"}))
+            plot_curves(curves, None, plotter="matplotlib",
+                        xlabel="N Sigma", ylabel="N Counts",
+                        title=self.title_prefix+"Pull Distribution",
+                        xlog=False, ylog=False, subplot=True, **plot_args)
+
+            output_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "residuals_pulls.png"
+            plt.savefig(output_path)
+            plt.close()
 
         if self.data_model_ratio_plot:
             pass
 
-        if self.pull_distribution_plot:
-            pass
-
         if(self.chi2_vs_dof_plot):
-            plot_args['ybounds'] = (0., len(self.data_shape))
+            #plot_args['xbounds'] = (0., len(self.data_shape))
+            #plot_args['ybounds'] = (0., len(self.data_shape))
             curves = []
-            colors = []
             chi2_vals = [0.]
             chi2 = 0.
-            print("len(self.data_shape): %s"%len(self.data_shape))
             for i_bin in range(len(self.data_shape)):
                 diff2 = (self.data_shape[i_bin]-self.tot_recon[i_bin])**2
-                sigma2 = (self.tot_recon_errors[i_bin]+self.data_errors[i_bin])**2
+                sigma2 = (self.tot_recon_errors[i_bin]**2+self.data_errors[i_bin]**2)
                 if(np.isclose(sigma2,0.)):
                     if(np.isclose(diff2,0.)):
                         chi2 += 1.
                     else:
-                        print("chi2 cannot be calculated for sigma2==%.3e, diff2==%.3e"%
-                              (sigma2, diff2))
+                        logger.error("chi2 cannot be calculated for bin %i, sigma2==%.3e, diff2==%.3e"%
+                                     (i_bin, sigma2, diff2))
                         chi2 += float("inf")
                 else:
                     chi2 += diff2/sigma2
@@ -575,7 +605,8 @@ class ReconstructSpectrumProcessor:
             dof = np.array(range(len(self.data_shape)+1))
             curves.append((dof, dof, "default", {"color":"red"}))
             curves.append((dof, chi2_vals, "default",
-                           {"marker":"*", "color":"black"}))
+                           {"marker":"^", "markersize":3, "color":"black",
+                            "alpha":1, "linestyle":"None"}))
             output_path = self.output_dir + "/" + \
                           self.output_path_prefix + "chi2_vs_dof.png"
             plot_curves(curves, output_path, plotter="matplotlib",

@@ -32,7 +32,8 @@ def mpl_plot_curves(curves, output_path,
                     colors=['black', 'blue', 'green', 'red', 'cyan',
                             'magenta', 'yellow', 'orange', 'purple'],
                     alpha=1.0, legend_size=None, legend_loc=0,
-                    legend_output_path=None):
+                    legend_output_path=None,
+                    subplot=False):
     """Plot curves using matplotlib
 
     Args:
@@ -59,11 +60,17 @@ def mpl_plot_curves(curves, output_path,
         colors: Colors used to plot the curves
         alpha: Transparency of the curves
         legend_size: int giving legend size
+        legend_loc: Loacation of the legend
+        legend_output_path: Alternate location to save legend to
+        subplot: Boolean specifying whether this should be put on a
+            subplot. If true, it assumes that plt.subplot() has
+            alread been called to set up the subplot.
 
     Returns:
         None: Stores a plot at the given path.
     """
-    figData = plt.figure()
+    if not subplot:
+        figData = plt.figure()
 
     for i,c in enumerate(curves):
         try:
@@ -157,9 +164,10 @@ def mpl_plot_curves(curves, output_path,
     else:
         legend_dict['loc'] = legend_loc
         plt.legend(**legend_dict)
-    figData.savefig(output_path)
-    figData.clf()
-    plt.close()
+    if not subplot:
+        figData.savefig(output_path)
+        figData.clf()
+        plt.close()
     return
 
 def plot_curves(curves, output_path,
@@ -170,7 +178,8 @@ def plot_curves(curves, output_path,
                 colors=['black', 'blue', 'green', 'red', 'cyan',
                         'magenta', 'yellow', 'orange', 'purple'],
                 alpha=1.0, legend_size=None,
-                legend_loc=0, legend_output_path=None):
+                legend_loc=0, legend_output_path=None,
+                subplot=False):
     """Plot a histogram using matplotlib
 
     Args:
@@ -208,5 +217,5 @@ def plot_curves(curves, output_path,
     mpl_plot_curves(curves, output_path, xlabel, ylabel, title,
                     xbounds, xlog, ybounds, ylog,
                     colors, alpha, legend_size,
-                    legend_loc, legend_output_path)
+                    legend_loc, legend_output_path, subplot)
     return
