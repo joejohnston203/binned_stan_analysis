@@ -37,6 +37,12 @@ logger = logging.getLogger(__name__)
 import numpy as np
 import matplotlib.pyplot as plt
 
+try:
+    import ROOT
+except ImportError as e:
+    logger.info("ROOT could not be imported, error: %s"%e)
+    logger.info("Continuing without ROOT")
+
 from morpho.utilities.reader import read_param
 from morpho.utilities.list_plotter import plot_curves
 from morpho.utilities.file_reader import *
@@ -57,12 +63,14 @@ class ReconstructSpectrumProcessor:
         individual_param_output_dir: String specifying output directory
             for plots of individual parameters. A separate directory
             can be specified because there could be a lot of these plots.
+
         output_path_prefix: String specifying output path prefix
         output_format: Format of output plots (Default="png")
 
-        store_param_distros: Whether the mean and standard deviation of
-            each parameter distribution should be stored. (Default=True)
-        store_param_distros_dir: Path where param distros should be stored
+        store_param_dists: Whether the results of a gaussian
+            fit of each parameter distribution should be stored. (Default=True)
+        store_param_dists_dir: Directory where the results of the
+            gaussian fit should be stored (Default=output_dir)
 
         make_individual_spectra: Boolean specifying whether plots
             should be saved with each spectrum plotted separately
@@ -85,6 +93,8 @@ class ReconstructSpectrumProcessor:
             degrees of freedom should be stored. (Default=True)
         make_data_plot: Whether a plot should be made containing only
             the data. (Default=True)
+        make_param_dist_plots: Whether a parameter distribution plot
+            should be saved for each parameter. (Default=True)
 
         binning_file: Path to text file containing edges of all bins.
             N+1 edges must be specified 
@@ -164,12 +174,15 @@ class ReconstructSpectrumProcessor:
         self.individual_param_output_dir = read_param(params,
                                                       'individual_param_output_dir',
                                                       self.output_dir)
+
+
         self.output_path_prefix = read_param(params, 'output_path_prefix', 'required')
         self.output_format = read_param(params, 'output_format', 'png')
 
-        self.store_param_distros = read_param(params, 'store_param_distros', True)
-        self.store_param_distros_dir = \
-            read_param(params, 'store_param_distros_dir', self.output_dir)
+        self.store_param_dists = \
+            read_param(params, 'store_param_dists', True)
+        self.store_param_dists_dir = read_param(params, 'param_dists_dir',
+                                                  self.output_dir+"/param_dists")
 
         self.individual_spectra = read_param(params, 'make_individual_spectra', True)
         self.stacked_spectra = read_param(params, 'make_stacked_spectra', True)
@@ -180,6 +193,7 @@ class ReconstructSpectrumProcessor:
         self.data_model_ratio_plot = read_param(params, 'make_data_model_ratio_plot', True)
         self.chi2_vs_dof_plot = read_param(params, 'make_chi2_vs_dof_plot', True)
         self.make_data_plot = read_param(params, 'make_data_plot', True)
+        self.param_dist_plots = read_param(params, 'make_param_dist_plots', True)
 
         self.binning_file = read_param(params, 'binning_file', None)
         self.binning_file_format = read_param(params, 'binning_file_format', 'text')
@@ -357,25 +371,10 @@ class ReconstructSpectrumProcessor:
         """Create the plots"""
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-        if not os.path.exists(self.store_param_distros_dir):
-            os.makedirs(self.store_param_distros_dir)
         if not os.path.exists(self.individual_param_output_dir):
             os.makedirs(self.individual_param_output_dir)
-
-        if self.store_param_distros:
-            param_dist_file = open(self.store_param_distros_dir +
-                                   "/" + self.output_path_prefix +
-                                   "param_distributions.txt", 'w')
-            col_width = 40
-            temp_str = str("Parameter_Name")[:col_width-2].ljust(col_width)
-            param_dist_file.write(temp_str+"Mean           Sigma\n")
-            for p in self.reconstructed_param_dicts:
-                name_fixed_width = p["name"][:col_width-2].ljust(col_width)
-                param_dist_file.write("%s%.8e %.8e\n"%
-                                      (name_fixed_width,
-                                       p["distribution_average"],
-                                       p["distribution_sigma"]))
-            param_dist_file.close()
+        if not os.path.exists(self.store_param_dists_dir):
+            os.makedirs(self.store_param_dists_dir)
 
         if(self.divide_by_bin_width):
             histo_plot_type = "histo_line"
@@ -657,6 +656,139 @@ class ReconstructSpectrumProcessor:
                         title=self.title_prefix+"Chi-Squared vs d.o.f.",
                         xlog=False, ylog=False, **plot_args)
 
+        if self.param_dist_plots or self.store_param_dists:
+            if self.store_param_dists:
+                text_output_file = self.store_param_dists_dir + \
+                                   "/" + self.output_path_prefix + \
+                                   "param_distribution_gauss_fits.txt"
+                param_dist_file = open(text_output_file, 'w')
+                p_name_col_width = 40
+                param_dist_file.write("P Num   " +
+                                      "Parameter Name".ljust(p_name_col_width) + "\t"
+                                      "Dist Mean   \t" +
+                                      "Dist Sigma  \t" +
+                                      "Fit Mu      \t" +
+                                      "Fit Sigma   \t" +
+                                      "mu>3*sig\t" +
+                                      "5% Quantile \t" +
+                                      "95% Quantile\t" +
+                                      "90% Quantile\t" +
+                                      "\n")
+
+            for i_param, p in enumerate(self.reconstructed_param_dicts):
+                if not p["distribution_format"]=="root values":
+                    logger.notice("Plotting parameter distributions only "+
+                                  "available for file format 'root values'")
+                    logger.warn("Skipping parameter %s"%p[name])
+                    continue
+                else:
+                    myfile = ROOT.TFile(p["distribution_path"], "READ")
+                    tree = myfile.Get(p["distribution_variables"]["tree"])
+                    branch = p["distribution_variables"]["branches"][0]
+                    cut = p["distribution_variables"]["cut"]
+                    # Setting lb>ub will force automatic bininng
+                    nbins = 50
+                    param_hist = ROOT.TH1F("param_hist", "", nbins, 1., -1.)
+                    curr_counts = tree.Draw(branch+">>param_hist", cut, "goff")
+                    def gaus_fit_fcn(x, p):
+                        arg = (x[0]-p[1])/p[2]
+                        if(x[0]>0):
+                            return p[0]*np.exp(-0.5*arg**2)/np.sqrt(2*np.pi*p[2]**2)
+                        else:
+                            return 0.
+                    gaus_fitter = ROOT.TF1("gaus_fitter", gaus_fit_fcn, -100, 100, 3)
+                    gaus_fitter.SetParameters(curr_counts/float(nbins),
+                                              p["distribution_average"],
+                                              p["distribution_sigma"])
+                    param_hist.Fit(gaus_fitter, "Q0", "goff")
+                    gaus_norm = gaus_fitter.GetParameter(0)
+                    gaus_mean = gaus_fitter.GetParameter(1)
+                    gaus_sigma = gaus_fitter.GetParameter(2)
+                    if (gaus_mean-3.*gaus_sigma)>=0.:
+                        gaus_fit_good = True
+                    else:
+                        gaus_fit_good = False
+                    quantile_fracs = np.array([0.05, 0.95, 0.9])
+                    # quantiles will be filled by GetQuantiles
+                    quantiles = np.zeros(len(quantile_fracs))
+                    param_hist.GetQuantiles(len(quantile_fracs),
+                                            quantiles, quantile_fracs)
+
+                    if self.param_dist_plots:
+                        binning = []
+                        bin_centers = []
+                        bin_contents = []
+                        if gaus_fit_good:
+                            cl_90pct_lb = quantiles[0]
+                            cl_90pct_ub = quantiles[1]
+                        else:
+                            cl_90pct_lb = 0.
+                            cl_90pct_ub = quantiles[2]
+                        for i_bin in range(1,nbins+1):
+                            binning.append(param_hist.GetBinLowEdge(i_bin))
+                            bin_centers.append(param_hist.GetBinCenter(i_bin))
+                            bin_contents.append(param_hist.GetBinContent(i_bin))
+                            if binning[-1]<=cl_90pct_lb:
+                                shaded_bin_low = i_bin
+                            elif binning[-1]<cl_90pct_ub:
+                                shaded_bin_high = i_bin
+                        binning.append(param_hist.GetBinLowEdge(nbins+1))
+                        binning = np.array(binning)
+                        bin_centers = np.array(bin_centers)
+                        bin_contents = np.array(bin_contents)
+
+                        curves = []
+                        # Append 90% CL region, shaded
+                        if gaus_fit_good:
+                            temp_opts = {"color":"yellow", "alpha":0.7}
+                        else:
+                            temp_opts = {"color":"orange", "alpha":0.7}
+                        curves.append((binning[shaded_bin_low:shaded_bin_high+1],
+                                       bin_contents[shaded_bin_low:shaded_bin_high],
+                                       "histo_shaded", temp_opts))
+
+                        # Append histogram with poisson error bars
+                        lb = float(param_hist.GetBinLowEdge(1))
+                        ub = float(param_hist.GetBinLowEdge(nbins+1))
+                        bin_width = (ub-lb)/float(nbins)
+                        curves.append((binning, bin_contents, "histo_error",
+                                       {"yerr":np.sqrt(bin_contents),
+                                        "color":"black"}))
+
+                        # Append gaussian fit, in blue or red depending on gaus_fit_good
+                        if gaus_fit_good:
+                            temp_opts_g = {"color":"blue"}
+                        else:
+                            temp_opts_g = {"color":"red"}
+                        xpts = np.linspace(lb, ub, 200)
+                        def curr_gaussian(x):
+                            return gaus_fit_fcn([x], [gaus_norm, gaus_mean, gaus_sigma])
+                        curr_gaussian = np.vectorize(curr_gaussian)
+                        ypts = curr_gaussian(xpts)
+                        curves.append((xpts, ypts, "default", temp_opts_g))
+
+                        plot_output_file = self.store_param_dists_dir + \
+                                           "/" + self.output_path_prefix + \
+                                           "p%i_%s.%s"%(i_param, p["name"],
+                                                         self.output_format)
+                        plot_curves(curves, plot_output_file, plotter="matplotlib",
+                                    xlabel=p["name"], ylabel="Distribution",
+                                    title=self.title_prefix+p["name"]+" Distribution",
+                                    xlog=False, ylog=False)
+
+                    if self.store_param_dists:
+                        param_dist_file.write("%i\t%s\t%.5e\t%.5e\t%.5e\t%.5e\t%s\t%.5e\t%.5e\t%.5e\n"%
+                                              (i_param+1,
+                                               p["name"][:p_name_col_width-2].ljust(p_name_col_width, '.'),
+                                               p["distribution_average"],
+                                               p["distribution_sigma"],
+                                               gaus_mean,
+                                               gaus_sigma,
+                                               ("%s"%gaus_fit_good).ljust(8),
+                                               quantiles[0],
+                                               quantiles[2],
+                                               quantiles[1]))
+            param_dist_file.close()
         return
 
 
