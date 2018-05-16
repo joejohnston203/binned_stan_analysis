@@ -121,7 +121,7 @@ class BinnedConfigBuilder:
           - plots_output_dir: Output path used to store plots
             (Default="results/plots/")
           - plots_output_format: File extension of the output format
-            (Default=".png")
+            (Default="png")
           - debug_dir: Directory used to store debugging output
             (Default="data/binned_analysis/debug")
 
@@ -338,7 +338,7 @@ class BinnedConfigBuilder:
         self.plots_output_dir = \
             read_param(paths_dict, 'plots_output_dir', "results/plots")
         self.plots_output_format = \
-            read_param(paths_dict, 'plots_output_format', ".png")
+            read_param(paths_dict, 'plots_output_format', "png")
         self.debug_dir = \
             read_param(paths_dict, 'debug_dir',
                        "data/binned_analysis/debug")
@@ -659,18 +659,19 @@ class BinnedConfigBuilder:
             binned_spectra_dict["individual_param_output_dir"] = self.plots_output_dir +\
                                                                  "/param_reconstructions"
             binned_spectra_dict["output_path_prefix"] =  self.data_set_names[i_data]+"_"
-            binned_spectra_dict["plot_data"] = True
-            binned_spectra_dict["store_param_distros"] = True
-            binned_spectra_dict["store_param_distros_dir"] = self.plots_output_dir
+            binned_spectra_dict["output_format"] = self.plots_output_format
+            binned_spectra_dict["store_param_dists"] = False
+            binned_spectra_dict["store_param_dists_dir"] = self.plots_output_dir+"/param_dists"
             binned_spectra_dict["make_individual_spectra"] = True
             binned_spectra_dict["make_stacked_spectra"] = True
             binned_spectra_dict["make_unstacked_spectra"] = True
             binned_spectra_dict["make_reconstruction_plot"] = True
             binned_spectra_dict["make_diff_plot"] = True
-            binned_spectra_dict["make_residual_plot"] = True
+            binned_spectra_dict["make_residual_pull_plot"] = True
             binned_spectra_dict["make_data_model_ratio_plot"] = True
-            binned_spectra_dict["make_pull_distribution_plot"] = True
+            binned_spectra_dict["make_chi2_vs_dof_plot"] = True
             binned_spectra_dict["make_data_plot"] = True
+            binned_spectra_dict["make_param_dist_plots"] = False
             binned_spectra_dict["binning_file"] = self.binning_files[i_data]
             binned_spectra_dict["binning_file_format"] = "R"
             binned_spectra_dict["binning_file_variable"] = self.dim_name
@@ -705,23 +706,62 @@ class BinnedConfigBuilder:
                 )
             plotting.append(binned_spectra_dict)
 
-        # Add Histogram plot of each param distro
-        if not os.path.exists(self.plots_output_dir + "/param_distros"):
-            mkdir_p(self.plots_output_dir + "/param_distros")
+        binned_spectra_dict = UnsortableOrderedDict()
+        binned_spectra_dict["module_name"] = "binned_spectra"
+        binned_spectra_dict["method_name"] = "reconstructed_spectrum"
+        binned_spectra_dict["output_dir"] = self.plots_output_dir
+        binned_spectra_dict["individual_param_output_dir"] = self.plots_output_dir +\
+                                                             "/param_reconstructions"
+        binned_spectra_dict["output_path_prefix"] =  ""
+        binned_spectra_dict["output_format"] = self.plots_output_format
+        binned_spectra_dict["store_param_dists"] = True
+        binned_spectra_dict["store_param_dists_dir"] = self.plots_output_dir+"/param_dists"
+        binned_spectra_dict["make_individual_spectra"] = False
+        binned_spectra_dict["make_stacked_spectra"] = False
+        binned_spectra_dict["make_unstacked_spectra"] = False
+        binned_spectra_dict["make_reconstruction_plot"] = False
+        binned_spectra_dict["make_diff_plot"] = False
+        binned_spectra_dict["make_residual_pull_plot"] = False
+        binned_spectra_dict["make_data_model_ratio_plot"] = False
+        binned_spectra_dict["make_chi2_vs_dof_plot"] = False
+        binned_spectra_dict["make_data_plot"] = False
+        binned_spectra_dict["make_param_dist_plots"] = True
+        binned_spectra_dict["binning_file"] = self.binning_files[0]
+        binned_spectra_dict["binning_file_format"] = "R"
+        binned_spectra_dict["binning_file_variable"] = self.dim_name
+        binned_spectra_dict["divide_by_bin_width"] = True
+        binned_spectra_dict["xlabel"] = "Energy (keV)"
+        binned_spectra_dict["ylabel"] = "Counts/keV"
+        binned_spectra_dict["ylog"] = True
+        binned_spectra_dict["title_prefix"] = ""
+        if self.generate_fake_data:
+            binned_spectra_dict["data_path"] = self.fake_data_file
+        else:
+            binned_spectra_dict["data_path"] = self.shapes_files[0]
+        binned_spectra_dict["data_format"] = "R counts"
+        binned_spectra_dict["data_var_names"] = ["%s_%s"%(self.data_set_names[0],
+                                                          self.dim_name)]
+        binned_spectra_dict["parameters"] = []
         for i_param in range(self.num_params):
-            p_name = self.param_names[i_param]
-            histo_dict = UnsortableOrderedDict()
-            histo_dict["method_name"] = "histo"
-            histo_dict["module_name"] = "histo"
-            histo_dict["title"] = "distro"
-            histo_dict["input_file_name"] = self.morpho_output_dir+"/"+\
-                                            self.morpho_output_file+".root"
-            histo_dict["input_tree"] = self.morpho_output_tree
-            histo_dict["output_path"] = self.plots_output_dir + "/param_distros"
-            histo_dict["data"] = ["rate_%s"%p_name]
-            plotting.append(histo_dict)
+            binned_spectra_dict["parameters"].append(
+                {
+                    "name": self.param_names[i_param],
+                    "shape_path": self.shapes_files[0],
+                    "shape_format": "R counts",
+                    "shape_var_names": ["%s_%i_%s"%
+                                        (self.param_names[i_param], 0,
+                                         self.dim_name)],
+                    "distribution_path": self.morpho_output_dir+"/"+\
+                                         self.morpho_output_file+".root",
+                    "distribution_format": "root values",
+                    "distribution_tree": self.morpho_output_tree,
+                    "distribution_branches": ["rate_"+self.param_names[i_param]]
+                }
+            )
+        plotting.append(binned_spectra_dict)
 
-        # Add correlation plots
+
+        '''# Add correlation plots
         apost_dict = UnsortableOrderedDict()
         apost_dict["method_name"] = "aposteriori_distribution"
         apost_dict["module_name"] = "histo"
@@ -737,7 +777,7 @@ class BinnedConfigBuilder:
         apost_dict["data"] = []
         for p_name in self.param_names:
             apost_dict["data"].append("rate_"+p_name)
-        plotting.append(apost_dict)
+        plotting.append(apost_dict)'''
 
         corr_factors_dict = UnsortableOrderedDict()
         corr_factors_dict["module_name"] = "histo"

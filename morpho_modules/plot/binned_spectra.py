@@ -70,7 +70,7 @@ class ReconstructSpectrumProcessor:
         store_param_dists: Whether the results of a gaussian
             fit of each parameter distribution should be stored. (Default=True)
         store_param_dists_dir: Directory where the results of the
-            gaussian fit should be stored (Default=output_dir)
+            gaussian fit should be stored (Default=output_dir/param_dists)
 
         make_individual_spectra: Boolean specifying whether plots
             should be saved with each spectrum plotted separately
