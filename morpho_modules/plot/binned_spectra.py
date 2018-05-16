@@ -17,7 +17,6 @@ Functions:
   - reconstructed_spectrum: Plot reconstruction with stan parameters
 
 ToDo:
-  - Display error bars on the plots
   - Enable specifying a column or row from an R array
   - All plots currently assume 1D. Maybe I can naturally extend to
     multiple dimensions?
@@ -59,13 +58,12 @@ class ReconstructSpectrumProcessor:
             for plots of individual parameters. A separate directory
             can be specified because there could be a lot of these plots.
         output_path_prefix: String specifying output path prefix
+        output_format: Format of output plots (Default="png")
 
         store_param_distros: Whether the mean and standard deviation of
             each parameter distribution should be stored. (Default=True)
         store_param_distros_dir: Path where param distros should be stored
 
-        plot_data: Boolean specifying whether data should be
-            included on plots (Default=True)
         make_individual_spectra: Boolean specifying whether plots
             should be saved with each spectrum plotted separately
             (Default=True)
@@ -167,12 +165,12 @@ class ReconstructSpectrumProcessor:
                                                       'individual_param_output_dir',
                                                       self.output_dir)
         self.output_path_prefix = read_param(params, 'output_path_prefix', 'required')
+        self.output_format = read_param(params, 'output_format', 'png')
 
         self.store_param_distros = read_param(params, 'store_param_distros', True)
         self.store_param_distros_dir = \
             read_param(params, 'store_param_distros_dir', self.output_dir)
 
-        self.plot_data = read_param(params, 'plot_data', True)
         self.individual_spectra = read_param(params, 'make_individual_spectra', True)
         self.stacked_spectra = read_param(params, 'make_stacked_spectra', True)
         self.unstacked_spectra = read_param(params, 'make_unstacked_spectra', True)
@@ -198,31 +196,30 @@ class ReconstructSpectrumProcessor:
         self.ylog = read_param(params, 'ylog', False)
         self.title_prefix = read_param(params, 'title_prefix', "")
 
-        if(self.plot_data or self.make_data_plot):
-            self.data_path = \
-                read_param(params, 'data_path', 'required')
-            self.data_format = \
-                read_param(params, 'data_format', 'required').split()
-            self.data_variables = {}
-            if "text" in self.data_format:
-                self.data_variables["columns"] = \
-                    read_param(params, 'data_columns', 'required')
-            if "root" in self.data_format:
-                self.data_variables["tree"] = \
-                    read_param(params, 'data_tree', 'required')
-                self.data_variables["branches"] = \
-                    read_param(params, 'data_branches', 'required')
-            if "R" in self.data_format:
-                self.data_variables["variable_names"] = \
-                    read_param(params, 'data_var_names', 'required')
-            if "python" in self.data_format:
-                self.data_variables["path"] = self.data_path
-                self.data_variables["module"] = \
-                    read_param(params, 'data_module', 'required')
-                self.data_variables["method_name"] = \
-                    read_param(params, 'data_function', 'required')
-                self.data_variables["method_options"] = \
-                    read_param(params, 'data_function_options', 'required')
+        self.data_path = \
+            read_param(params, 'data_path', 'required')
+        self.data_format = \
+            read_param(params, 'data_format', 'required').split()
+        self.data_variables = {}
+        if "text" in self.data_format:
+            self.data_variables["columns"] = \
+                read_param(params, 'data_columns', 'required')
+        if "root" in self.data_format:
+            self.data_variables["tree"] = \
+                read_param(params, 'data_tree', 'required')
+            self.data_variables["branches"] = \
+                read_param(params, 'data_branches', 'required')
+        if "R" in self.data_format:
+            self.data_variables["variable_names"] = \
+                read_param(params, 'data_var_names', 'required')
+        if "python" in self.data_format:
+            self.data_variables["path"] = self.data_path
+            self.data_variables["module"] = \
+                read_param(params, 'data_module', 'required')
+            self.data_variables["method_name"] = \
+                read_param(params, 'data_function', 'required')
+            self.data_variables["method_options"] = \
+                read_param(params, 'data_function_options', 'required')
 
         self.reconstructed_param_dicts = read_param(params, 'parameters', 'required')
         for p in self.reconstructed_param_dicts:
@@ -289,11 +286,10 @@ class ReconstructSpectrumProcessor:
         self.bin_centers = np.array(self.bin_centers, dtype='float64')
 
         # Get data shape
-        if(self.plot_data or self.make_data_plot):
-            data_info = self._get_histogram(self.data_path, self.data_format,
-                                            self.data_variables)
-            self.data_shape = data_info[0]
-            self.data_errors = data_info[3]
+        data_info = self._get_histogram(self.data_path, self.data_format,
+                                        self.data_variables)
+        self.data_shape = data_info[0]
+        self.data_errors = data_info[3]
 
         # Get parameter shapes, distributions, and the total reconstruction
         self.tot_recon = np.zeros(len(self.binning)-1)
@@ -390,7 +386,8 @@ class ReconstructSpectrumProcessor:
             data_curve = (self.binning, self.data_shape, "histo_error",
                           {"yerr":self.data_errors})
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "data.png"
+                          self.output_path_prefix + "data." + \
+                          self.output_format
             plot_args = {"alpha":1.0}
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
@@ -405,27 +402,26 @@ class ReconstructSpectrumProcessor:
                 plot_args['ybounds'] = self.ybounds
             for i,p in enumerate(self.reconstructed_param_dicts):
                 curves = []
-                colors = []
-                if self.plot_data:
-                    curves.append((self.binning, self.data_shape,
-                                   "histo_error",
-                                   {"label":"Data", "yerr":self.data_errors}))
-                    colors.append('blue')
+                curves.append((self.binning, self.data_shape,
+                               "histo_error",
+                               {"label":"Data", "yerr":self.data_errors,
+                                "color":"blue"}))
                 curves.append((self.binning,
                                p["distribution_average"]*p["shape"],
                                "histo_error",
                                {"label":p["name"],
-                                "yerr":p["distribution_sigma"]*p["shape"]}))
-                colors.append('red')
+                                "yerr":p["distribution_sigma"]*p["shape"],
+                                "color":"red"}))
                 output_path = self.individual_param_output_dir + "/" + \
-                              self.output_path_prefix + "%s.png"%p["name"]
+                              self.output_path_prefix + \
+                              "%s.%s"%(p["name"],self.output_format)
                 plot_args = {}
                 if not self.ybounds=="auto":
                     plot_args['ybounds'] = self.ybounds
                 plot_curves(curves, output_path, plotter="matplotlib",
                             xlabel=self.xlabel, ylabel=self.ylabel,
                             title="%sSpectrum %s"%(self.title_prefix,p["name"]),
-                            xlog=self.xlog, ylog=self.ylog, colors=colors,
+                            xlog=self.xlog, ylog=self.ylog,
                             **plot_args)
 
         if self.stacked_spectra:
@@ -439,12 +435,15 @@ class ReconstructSpectrumProcessor:
                           "histo_shaded",
                            {})] + \
                           curves
-            if self.plot_data:
-                curves.append((self.binning, self.data_shape,
-                               "histo_line",
-                               {"label":"Data", "color":"black", "linewidth":2, "alpha":1}))
+            curves.append((self.binning, self.data_shape,
+                           "histo_line",
+                           {"label":"Data", "color":"black", "linewidth":2, "alpha":1}))
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "stacked_spectra.png"
+                          self.output_path_prefix + "stacked_spectra." + \
+                          self.output_format
+            legend_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "stacked_spectra_legend." + \
+                          self.output_format
             plot_args = {"alpha":0.5}
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
@@ -453,7 +452,7 @@ class ReconstructSpectrumProcessor:
                         title=self.title_prefix+"Stacked Spectra",
                         xlog=self.xlog, ylog=self.ylog,
                         legend_loc=0,
-                        legend_output_path=output_path[:-4]+"_legend.png",
+                        legend_output_path=legend_path,
                         **plot_args)
 
         if self.unstacked_spectra:
@@ -466,12 +465,15 @@ class ReconstructSpectrumProcessor:
                           "histo_shaded",
                            {})] + \
                           curves
-            if self.plot_data:
-                curves.append((self.binning, self.data_shape,
-                               "histo_line",
-                               {"label":"Data", "color":"black", "linewidth":2, "alpha":1}))
+            curves.append((self.binning, self.data_shape,
+                           "histo_line",
+                           {"label":"Data", "color":"black", "linewidth":2, "alpha":1}))
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "unstacked_spectra.png"
+                          self.output_path_prefix + "unstacked_spectra." + \
+                          self.output_format
+            legend_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "unstacked_spectra_legend." + \
+                          self.output_format
             plot_args = {"alpha":0.5}
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
@@ -480,64 +482,60 @@ class ReconstructSpectrumProcessor:
                         title=self.title_prefix+"Unstacked Spectra",
                         xlog=self.xlog, ylog=self.ylog,
                         legend_loc=0,
-                        legend_output_path=output_path[:-4]+"_legend.png",
+                        legend_output_path=legend_path,
                         **plot_args)
 
         if self.reconstruction_plot:
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
             curves = []
-            colors = []
-            if self.plot_data:
-                curves.append((self.binning, self.data_shape,
-                               "histo_error",
-                               {"label":"Data",
-                                "yerr":self.data_errors}))
-                colors.append('blue')
+            curves.append((self.binning, self.data_shape,
+                           "histo_error",
+                           {"label":"Data",
+                            "yerr":self.data_errors, "color":"blue"}))
             curves.append((self.binning, self.tot_recon,
                            "histo_error",
                            {"label":"Reconstruction",
-                            "yerr":self.tot_recon_errors}))
-            colors.append('red')
+                            "yerr":self.tot_recon_errors, "color":"red"}))
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "reconstruction.png"
+                          self.output_path_prefix + "reconstruction." + \
+                          self.output_format
             plot_args = {"alpha":0.5}
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
             plot_curves(curves, output_path, plotter="matplotlib",
                         xlabel=self.xlabel, ylabel=self.ylabel,
                         title=self.title_prefix+"Reconstruction",
-                        xlog=self.xlog, ylog=self.ylog, colors=colors,
+                        xlog=self.xlog, ylog=self.ylog,
                         **plot_args)
 
         if self.diff_plot:
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
             curves = []
-            colors = []
-            if self.plot_data:
-                curves.append((self.binning, self.data_shape,
-                               "histo_error",
-                               {"label":"Data",
-                                "yerr":self.data_errors}))
-                colors.append('blue')
+            curves.append((self.binning, self.data_shape,
+                           "histo_error",
+                           {"label":"Data",
+                            "yerr":self.data_errors, "color":"blue"}))
             curves.append((self.binning, self.tot_recon,
                            "histo_error",
                            {"label":"Reconstruction",
-                            "yerr":self.tot_recon_errors}))
-            colors.append('red')
+                            "yerr":self.tot_recon_errors, "color":"red"}))
             curves.append((self.binning,(self.data_shape-self.tot_recon),
-                           "histo_line", {"label":"Diff (Data-Recon)"}))
-            colors.append('black')
+                           "histo_error",
+                           {"label":"Diff (Data-Recon)", "color":"black",
+                            "yerr":np.sqrt(self.tot_recon_errors**2+
+                                           self.data_errors**2)}))
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "residual.png"
+                          self.output_path_prefix + "residual." + \
+                          self.output_format
             plot_args = {"alpha":0.5}
             if not self.ybounds=="auto":
                 plot_args['ybounds'] = self.ybounds
             plot_curves(curves, output_path, plotter="matplotlib",
                         xlabel=self.xlabel, ylabel=self.ylabel,
                         title=self.title_prefix+"Reconstruction Difference",
-                        xlog=self.xlog, ylog=False, colors=colors,
+                        xlog=self.xlog, ylog=False,
                         **plot_args)
 
         if self.residual_pull_plot:
@@ -575,11 +573,55 @@ class ReconstructSpectrumProcessor:
                         xlog=False, ylog=False, subplot=True, **plot_args)
 
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "residuals_pulls.png"
+                          self.output_path_prefix + "residuals_pulls." + \
+                          self.output_format
             plt.savefig(output_path)
             plt.close()
 
         if self.data_model_ratio_plot:
+            plot_args = {}
+            ax1 = plt.subplot(2, 1, 1)
+            curves = []
+            curves.append((self.binning, self.data_shape,
+                           "histo_error",
+                           {"label":"Data", "color":"blue",
+                            "yerr":self.data_errors}))
+            curves.append((self.binning, self.tot_recon,
+                           "histo_error",
+                           {"label":"Reconstruction", "color":"red",
+                            "yerr":self.tot_recon_errors}))
+            plot_curves(curves, None, plotter="matplotlib",
+                        xlabel="", ylabel=self.ylabel,
+                        title=self.title_prefix+"Reconstruction",
+                        xlog=self.xlog, ylog=self.ylog,
+                        subplot=True,
+                        **plot_args)
+
+            ax2 = plt.subplot(2, 1, 2, sharex=ax1)
+            curves = []
+            ratios = self.data_shape/self.tot_recon
+            ratio_errors = ratios*np.sqrt((self.data_errors/self.data_shape)**2+
+                                          (self.tot_recon_errors/self.tot_recon)**2)
+            curves.append((self.binning, 6.*ratio_errors, "histo_shaded",
+                           {"bottom":1-3.*ratio_errors,"color":"red"}))
+            curves.append((self.binning, 4.*ratio_errors, "histo_shaded",
+                           {"bottom":1-2.*ratio_errors,"color":"yellow"}))
+            curves.append((self.binning, 2.*ratio_errors, "histo_shaded",
+                           {"bottom":1-ratio_errors,"color":"cyan"}))
+            curves.append((self.bin_centers, ratios, "default",
+                           {"marker":".", "color":"black", "linestyle":"None"}))
+            plot_curves(curves, None, plotter="matplotlib",
+                        xlabel=self.xlabel, ylabel="Data/Model Ratio",
+                        title="",
+                        xlog=self.xlog, ylog=False,
+                        subplot=True,
+                        **plot_args)
+
+            output_path = self.output_dir + "/" + \
+                          self.output_path_prefix + "data_model_ratio." + \
+                          self.output_format
+            plt.savefig(output_path)
+            plt.close()
             pass
 
         if(self.chi2_vs_dof_plot):
@@ -608,9 +650,10 @@ class ReconstructSpectrumProcessor:
                            {"marker":"^", "markersize":3, "color":"black",
                             "alpha":1, "linestyle":"None"}))
             output_path = self.output_dir + "/" + \
-                          self.output_path_prefix + "chi2_vs_dof.png"
+                          self.output_path_prefix + "chi2_vs_dof." + \
+                          self.output_format
             plot_curves(curves, output_path, plotter="matplotlib",
-                        xlabel="d.o.f. (n bins)", ylabel="Chi-2",
+                        xlabel=self.xlabel, ylabel="Chi-2",
                         title=self.title_prefix+"Chi-Squared vs d.o.f.",
                         xlog=False, ylog=False, **plot_args)
 

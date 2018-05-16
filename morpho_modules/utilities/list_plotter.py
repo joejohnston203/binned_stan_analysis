@@ -89,8 +89,14 @@ def mpl_plot_curves(curves, output_path,
                     bar_widths.append(xpts[j+1]-xpts[j])
                 if not "linewidth" in opts:
                     opts["linewidth"] = 0
-                plt.bar(xpts[:-1], ypts,
-                        width=bar_widths, **opts)
+                if "bottom" in opts:
+                    bottom = opts.pop("bottom")
+                    plt.bar(xpts[:-1], ypts,
+                            width=bar_widths, bottom=bottom,
+                            **opts)
+                else:
+                    plt.bar(xpts[:-1], ypts,
+                            width=bar_widths, **opts)
             elif(c_type=="histo_line"):
                 histo_ypts = np.append(min(ypts), ypts)
                 plt.plot(xpts, histo_ypts, ls='steps', **opts)
