@@ -11,7 +11,8 @@ def main():
     """
     Compare Stan and JAGS runs
 
-    Takes three positional command line arguments
+    Takes three positional command line arguments, and
+    an optional fourth argument
 
     Args:
         sys.argv[1]: Path to the output file of stan
@@ -22,6 +23,8 @@ def main():
             with information about the JAGS run. Default name is 
             b2g-$fake_data_name'.txt'
         sys.argv[3]: Output path to save data
+        sys.argv[4]: Magnitudes used to generate fake data
+            (optional)
 
     Returns:
         None: Creates plots comparing the two
@@ -74,29 +77,38 @@ def main():
               "S Disc\t"+\
               "Stan P Name\n"
     param_names = ""
+    jags_means = []
+    jags_sigmas = []
+    stan_means = []
+    stan_sigmas = []
     normalized_diffs = []
     n_params = min(len(stan_results), len(jags_results))
     for  i_p in range(n_params):
         jags_name = jags_results[i_p][0][:p_name_col_width-2].ljust(p_name_col_width, '.')
-        jags_mean = jags_results[i_p][2]
-        jags_sigma = jags_results[i_p][3]
+        jags_means.append(jags_results[i_p][2])
+        jags_sigmas.append(jags_results[i_p][3])
         jags_disc = jags_results[i_p][1]=='gaus_n'
-        stan_mean = stan_results[i_p][4]
-        stan_sigma = stan_results[i_p][5]
+        stan_means.append(stan_results[i_p][4])
+        stan_sigmas.append(stan_results[i_p][5])
         stan_disc = stan_results[i_p][6]
         stan_name = stan_results[i_p][1]
 
         results += "%i\t%s\t%.3e\t%.3e\t%s\t%.3e\t%.3e\t%s\t%s\n"%\
                    (i_p+1,
                     jags_name,
-                    jags_mean, jags_sigma,
+                    jags_means[-1], jags_sigmas[-1],
                     jags_disc,
-                    stan_mean, stan_sigma,
+                    stan_means[-1], stan_sigmas[-1],
                     stan_disc,
                     stan_name)
         param_names += jags_name+", "+stan_name+"\n"
-        normalized_diffs.append((jags_mean-stan_mean)/
-                                np.sqrt(jags_sigma**2+stan_sigma**2))
+        normalized_diffs.append((jags_means[-1]-stan_means[-1])/
+                                np.sqrt(jags_sigmas[-1]**2+stan_sigmas[-1]**2))
+
+    jags_means = np.array(jags_means)
+    jags_sigmas = np.array(jags_sigmas)
+    stan_means = np.array(stan_means)
+    stan_sigmas = np.array(stan_sigmas)
 
     res_file = open(sys.argv[3]+"/comparison.txt", 'w')
     res_file.write(results)
@@ -107,12 +119,50 @@ def main():
     param_file.close()
 
     fig = plt.figure()
-    plt.plot(range(1, n_params+1), normalized_diffs,
+    param_indices = range(1, n_params+1)
+    plt.plot(param_indices, normalized_diffs,
              linestyle="None", marker="o")
     plt.title("JAGS vs Stan, Marginal Distribution Gaussian Fits Comparison")
     plt.xlabel("Parameter Number")
     plt.ylabel("(mu_J-mu_S)/sqrt(sig_J**2+sig_S**2)")
     plt.savefig(sys.argv[3]+"/comparison.pdf")
+
+    if len(sys.argv)>=5:
+        true_mags = np.loadtxt(sys.argv[4])
+    else:
+        true_mags = None
+
+    fig = plt.figure()
+    if not true_mags is None:
+        plt.scatter(param_indices, true_mags, color='black',
+                    label="Real")
+    plt.errorbar(param_indices, jags_means, yerr=jags_sigmas,
+                 marker='o', color='green',
+                 label="JAGS", linestyle="None")
+    plt.errorbar(param_indices, stan_means, yerr=stan_sigmas,
+                 marker='^', color='blue',
+                 label="Stan", linestyle="None")
+    plt.legend(loc=0)
+    plt.title("Jags and Stan Param Extractions")
+    plt.xlabel("Parameter Number")
+    plt.ylabel("Normalization Coefficient")
+    plt.savefig(sys.argv[3]+"/extracted_normalizations.png")
+
+    if not true_mags is None:
+        fig = plt.figure()
+        plt.errorbar(param_indices,
+                     (np.array(jags_means)-np.array(true_mags))/np.array(jags_sigmas),
+                     marker='o', color='green',
+                     label="JAGS", linestyle="None")
+        plt.errorbar(param_indices,
+                     (np.array(stan_means)-np.array(true_mags))/np.array(stan_sigmas),
+                     marker='^', color='blue',
+                     label="Stan", linestyle="None")
+        plt.legend(loc=0)
+        plt.title("Jags and Stan Normalized Norm Extractions")
+        plt.xlabel("Parameter Number")
+        plt.ylabel("(mu_extracted-mu_true)/sigma_extracted")
+        plt.savefig(sys.argv[3]+"/extracted_normalizations_normalized.png")
 
 if __name__=="__main__":
     main()
