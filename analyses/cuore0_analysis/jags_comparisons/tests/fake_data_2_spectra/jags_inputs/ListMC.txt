@@ -1,0 +1,2 @@
+10mKFlan-th232_cnaf103.root 1.0
+10mKFlan-u238_cnaf104.root 1.0

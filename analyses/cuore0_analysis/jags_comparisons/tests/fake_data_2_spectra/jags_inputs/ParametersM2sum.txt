@@ -1,0 +1,29 @@
+# Binning Options
+	ExcludePeaks	n
+	VarSize_Binning	y
+	MergeBinLowCounts y
+	AlphaCustom	y
+# Rebinning parameter
+	MinimumBinSize		15.
+	MinimumBinCounts	30.
+# Parameters for the Prior upper limit of MC bin counts
+	MinCounts_Prior 	10
+	nSigmaMargin_Prior 	5.
+# Multiplication "ignorance" factor for the Prior upper limit of the MC spectra normalization coefficients
+	MultFactor	2.
+# Starting bin step [keV]
+	BinStep 	4.
+# Threshold [keV]
+	Threshold	350.
+	EnergyMax	7000.
+# Exclusion zone [keV]
+	ExclusionMin	0.
+	ExclusionMax	0.
+# Cuts on experimental spectrum only (es: ExpCut	PSA==1)
+#	ExpCut	PSA==1
+# Other cuts on all spectra (es: Cut	Layer==1)
+# JAGS simulation parameters
+	nchains		4
+	thin		10
+	skip		4000
+	n2sample	40000
