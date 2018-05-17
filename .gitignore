@@ -10,7 +10,7 @@ build/*
 *.pdf
 *.pkl
 *.out
-*.txt
+
 
 analyses/cuore0_analysis/scripts
 analyses/cuore0_analysis/models

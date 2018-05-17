@@ -38,17 +38,24 @@ def main():
     i_line = 0
     i_start = -1
     i_end = -1
-    with open(sys.argv[2], 'r') as jfile:
-        for line in jfile:
-            if 'GAUS FIT RESULTS' in line:
-                print("setting i_start")
-                i_start = i_line+2
-            if i_start>=0 and not line.strip():
-                i_end = i_line
-                break
-            i_line += 1
-    jags_results = np.genfromtxt(sys.argv[2], dtype=None,
-                                 skip_header=i_start, max_rows=i_end-i_start)
+    try:
+        with open(sys.argv[2], 'r') as jfile:
+            for line in jfile:
+                if 'GAUS FIT RESULTS' in line:
+                    print("setting i_start")
+                    i_start = i_line+2
+                if i_start>=0 and not line.strip():
+                    i_end = i_line
+                    break
+                i_line += 1
+        jags_results = np.genfromtxt(sys.argv[2], dtype=None,
+                                     skip_header=i_start, max_rows=i_end-i_start)
+    except Exception as e:
+        print("Got exception when opening stan results:\n%s")
+        print("i_line%i, i_start=%i, i_end=%i"%
+              (i_line, i_start, i_end))
+        print("exiting")
+        return
 
     if not len(stan_results)==len(jags_results):
         print("Different numbers of parameters were used in stan and jags")
@@ -56,12 +63,21 @@ def main():
         print("jags_results:\n%s"%jags_results)
         print("Discarding extra parameters")
 
-    results = "#P Num\tJAGS P Name\tJ Gauss Mean\tJ Gauss Sigma\tJ Discovery\tS Gauss Mean\tS Gauss Sigma\tS Discovery\t Stan P Name\n"
+    p_name_col_width = 40
+    results = "#P Num  "+\
+              "JAGS P Name".ljust(p_name_col_width)+"\t"+\
+              "J Gauss Mean\t"+\
+              "J Gauss Sigma\t"+\
+              "J Disc\t"+\
+              "S Gauss Mean\t"+\
+              "S Gauss Sigma\t"+\
+              "S Disc\t"+\
+              "Stan P Name\n"
     param_names = ""
     normalized_diffs = []
     n_params = min(len(stan_results), len(jags_results))
     for  i_p in range(n_params):
-        jags_name = jags_results[i_p][0]
+        jags_name = jags_results[i_p][0][:p_name_col_width-2].ljust(p_name_col_width, '.')
         jags_mean = jags_results[i_p][2]
         jags_sigma = jags_results[i_p][3]
         jags_disc = jags_results[i_p][1]=='gaus_n'
@@ -69,6 +85,7 @@ def main():
         stan_sigma = stan_results[i_p][5]
         stan_disc = stan_results[i_p][6]
         stan_name = stan_results[i_p][1]
+
         results += "%i\t%s\t%.3e\t%.3e\t%s\t%.3e\t%.3e\t%s\t%s\n"%\
                    (i_p+1,
                     jags_name,

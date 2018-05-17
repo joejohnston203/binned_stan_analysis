@@ -649,62 +649,7 @@ class BinnedConfigBuilder:
         morpho_config_dict["stan"] = self.stan_dict
 
         # Plotting configuration
-
         plotting = []
-        for i_data in range(self.num_data_sets):
-            binned_spectra_dict = UnsortableOrderedDict()
-            binned_spectra_dict["module_name"] = "binned_spectra"
-            binned_spectra_dict["method_name"] = "reconstructed_spectrum"
-            binned_spectra_dict["output_dir"] = self.plots_output_dir
-            binned_spectra_dict["individual_param_output_dir"] = self.plots_output_dir +\
-                                                                 "/param_reconstructions"
-            binned_spectra_dict["output_path_prefix"] =  self.data_set_names[i_data]+"_"
-            binned_spectra_dict["output_format"] = self.plots_output_format
-            binned_spectra_dict["store_param_dists"] = False
-            binned_spectra_dict["store_param_dists_dir"] = self.plots_output_dir+"/param_dists"
-            binned_spectra_dict["make_individual_spectra"] = True
-            binned_spectra_dict["make_stacked_spectra"] = True
-            binned_spectra_dict["make_unstacked_spectra"] = True
-            binned_spectra_dict["make_reconstruction_plot"] = True
-            binned_spectra_dict["make_diff_plot"] = True
-            binned_spectra_dict["make_residual_pull_plot"] = True
-            binned_spectra_dict["make_data_model_ratio_plot"] = True
-            binned_spectra_dict["make_chi2_vs_dof_plot"] = True
-            binned_spectra_dict["make_data_plot"] = True
-            binned_spectra_dict["make_param_dist_plots"] = False
-            binned_spectra_dict["binning_file"] = self.binning_files[i_data]
-            binned_spectra_dict["binning_file_format"] = "R"
-            binned_spectra_dict["binning_file_variable"] = self.dim_name
-            binned_spectra_dict["divide_by_bin_width"] = True
-            binned_spectra_dict["xlabel"] = "Energy (keV)"
-            binned_spectra_dict["ylabel"] = "Counts/keV"
-            binned_spectra_dict["ylog"] = True
-            binned_spectra_dict["title_prefix"] = self.data_set_names[i_data] + " "
-            if self.generate_fake_data:
-                binned_spectra_dict["data_path"] = self.fake_data_file
-            else:
-                binned_spectra_dict["data_path"] = self.shapes_files[i_data]
-            binned_spectra_dict["data_format"] = "R counts"
-            binned_spectra_dict["data_var_names"] = ["%s_%s"%(self.data_set_names[i_data],
-                                                              self.dim_name)]
-            binned_spectra_dict["parameters"] = []
-            for i_param in range(self.num_params):
-                binned_spectra_dict["parameters"].append(
-                    {
-                        "name": self.param_names[i_param],
-                        "shape_path": self.shapes_files[i_data],
-                        "shape_format": "R counts",
-                        "shape_var_names": ["%s_%i_%s"%
-                                            (self.param_names[i_param],i_data,
-                                             self.dim_name)],
-                        "distribution_path": self.morpho_output_dir+"/"+\
-                                             self.morpho_output_file+".root",
-                        "distribution_format": "root values",
-                        "distribution_tree": self.morpho_output_tree,
-                        "distribution_branches": ["rate_"+self.param_names[i_param]]
-                    }
-                )
-            plotting.append(binned_spectra_dict)
 
         binned_spectra_dict = UnsortableOrderedDict()
         binned_spectra_dict["module_name"] = "binned_spectra"
@@ -760,6 +705,60 @@ class BinnedConfigBuilder:
             )
         plotting.append(binned_spectra_dict)
 
+        for i_data in range(self.num_data_sets):
+            binned_spectra_dict = UnsortableOrderedDict()
+            binned_spectra_dict["module_name"] = "binned_spectra"
+            binned_spectra_dict["method_name"] = "reconstructed_spectrum"
+            binned_spectra_dict["output_dir"] = self.plots_output_dir
+            binned_spectra_dict["individual_param_output_dir"] = self.plots_output_dir +\
+                                                                 "/param_reconstructions"
+            binned_spectra_dict["output_path_prefix"] =  self.data_set_names[i_data]+"_"
+            binned_spectra_dict["output_format"] = self.plots_output_format
+            binned_spectra_dict["store_param_dists"] = False
+            binned_spectra_dict["store_param_dists_dir"] = self.plots_output_dir+"/param_dists"
+            binned_spectra_dict["make_individual_spectra"] = True
+            binned_spectra_dict["make_stacked_spectra"] = True
+            binned_spectra_dict["make_unstacked_spectra"] = True
+            binned_spectra_dict["make_reconstruction_plot"] = True
+            binned_spectra_dict["make_diff_plot"] = True
+            binned_spectra_dict["make_residual_pull_plot"] = True
+            binned_spectra_dict["make_data_model_ratio_plot"] = True
+            binned_spectra_dict["make_chi2_vs_dof_plot"] = True
+            binned_spectra_dict["make_data_plot"] = True
+            binned_spectra_dict["make_param_dist_plots"] = False
+            binned_spectra_dict["binning_file"] = self.binning_files[i_data]
+            binned_spectra_dict["binning_file_format"] = "R"
+            binned_spectra_dict["binning_file_variable"] = self.dim_name
+            binned_spectra_dict["divide_by_bin_width"] = True
+            binned_spectra_dict["xlabel"] = "Energy (keV)"
+            binned_spectra_dict["ylabel"] = "Counts/keV"
+            binned_spectra_dict["ylog"] = True
+            binned_spectra_dict["title_prefix"] = self.data_set_names[i_data] + " "
+            if self.generate_fake_data:
+                binned_spectra_dict["data_path"] = self.fake_data_file
+            else:
+                binned_spectra_dict["data_path"] = self.shapes_files[i_data]
+            binned_spectra_dict["data_format"] = "R counts"
+            binned_spectra_dict["data_var_names"] = ["%s_%s"%(self.data_set_names[i_data],
+                                                              self.dim_name)]
+            binned_spectra_dict["parameters"] = []
+            for i_param in range(self.num_params):
+                binned_spectra_dict["parameters"].append(
+                    {
+                        "name": self.param_names[i_param],
+                        "shape_path": self.shapes_files[i_data],
+                        "shape_format": "R counts",
+                        "shape_var_names": ["%s_%i_%s"%
+                                            (self.param_names[i_param],i_data,
+                                             self.dim_name)],
+                        "distribution_path": self.morpho_output_dir+"/"+\
+                                             self.morpho_output_file+".root",
+                        "distribution_format": "root values",
+                        "distribution_tree": self.morpho_output_tree,
+                        "distribution_branches": ["rate_"+self.param_names[i_param]]
+                    }
+                )
+            plotting.append(binned_spectra_dict)
 
         '''# Add correlation plots
         apost_dict = UnsortableOrderedDict()

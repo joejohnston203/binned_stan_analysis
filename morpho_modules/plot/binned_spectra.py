@@ -663,7 +663,7 @@ class ReconstructSpectrumProcessor:
                                    "param_distribution_gauss_fits.txt"
                 param_dist_file = open(text_output_file, 'w')
                 p_name_col_width = 40
-                param_dist_file.write("P Num   " +
+                param_dist_file.write("#P Num  " +
                                       "Parameter Name".ljust(p_name_col_width) + "\t"
                                       "Dist Mean   \t" +
                                       "Dist Sigma  \t" +
