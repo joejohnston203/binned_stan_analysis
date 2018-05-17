@@ -51,6 +51,9 @@ while true; do
 			ListMC_opt.txt SpectraM1.root SpectraM2.root \
 			SpectraM2sum.root
 	    cd ..
+	    if [ ! -d ../jags_outputs ]; then
+		mkdir ../jags_outputs
+	    fi
 	    cp -r JAGS_$fake_data_name ../jags_outputs/
 	    cp -r PrepareData-log ../jags_outputs/
 	    cd $CWD
@@ -69,10 +72,14 @@ while true; do
     read -p "Run Stan vs JAGS comparison? " yn
     case $yn in
         [Yy]* )
+	    if [ ! -d comparison_outputs ]; then
+		mkdir comparison_outputs
+	    fi
 	    . $morpho_venv_activate
 	    python ../../compare_stan_jags.py \
 		   stan_outputs/plots/param_dists/param_distribution_gauss_fits.txt \
-		   jags_outputs/JAGS_$fake_data_name/b2g-$fake_data_name'.txt'
+		   jags_outputs/JAGS_$fake_data_name/b2g-$fake_data_name'.txt' \
+		   comparison_outputs
 	    deactivate
 	    echo "Finished Stan vs JAGS comparison"
 	    echo
