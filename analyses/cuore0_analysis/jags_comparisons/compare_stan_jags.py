@@ -7,6 +7,8 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
+from morpho.utilities.list_plotter import plot_curves
+
 def main():
     """
     Compare Stan and JAGS runs
@@ -127,6 +129,27 @@ def main():
     plt.ylabel("(mu_J-mu_S)/sqrt(sig_J**2+sig_S**2)")
     plt.savefig(sys.argv[3]+"/comparison.pdf")
 
+
+    (pulls_hist, pulls_hist_edges) = \
+        np.histogram(normalized_diffs, bins=20, range=(-4, 4))
+    curves = []
+    curves.append((pulls_hist_edges, pulls_hist, "histo_error",
+                   {"yerr":np.sqrt(pulls_hist), "color":"black"}))
+    def norm_gauss(x):
+        return np.exp(-x**2/2.)/np.sqrt(2.*np.pi)
+    norm_gauss = np.vectorize(norm_gauss)
+    x_pts = np.linspace(pulls_hist_edges[0], pulls_hist_edges[-1])
+    y_pts = norm_gauss(x_pts)*len(normalized_diffs)*\
+            (pulls_hist_edges[1]-pulls_hist_edges[0])
+    curves.append((x_pts, y_pts, "default",
+                   {"color":"red"}))
+    plot_curves(curves,
+                sys.argv[3]+"/comparison_pulls.pdf",
+                plotter="matplotlib",
+                xlabel="N Sigma", ylabel="N Counts",
+                title="Pull Distribution",
+                xlog=False, ylog=False)
+
     if len(sys.argv)>=5:
         true_mags = np.loadtxt(sys.argv[4])
     else:
@@ -146,7 +169,7 @@ def main():
     plt.title("Jags and Stan Param Extractions")
     plt.xlabel("Parameter Number")
     plt.ylabel("Normalization Coefficient")
-    plt.savefig(sys.argv[3]+"/extracted_normalizations.png")
+    plt.savefig(sys.argv[3]+"/extracted_normalizations.pdf")
 
     if not true_mags is None:
         fig = plt.figure()
@@ -162,7 +185,7 @@ def main():
         plt.title("Jags and Stan Normalized Norm Extractions")
         plt.xlabel("Parameter Number")
         plt.ylabel("(mu_extracted-mu_true)/sigma_extracted")
-        plt.savefig(sys.argv[3]+"/extracted_normalizations_normalized.png")
+        plt.savefig(sys.argv[3]+"/extracted_normalizations_normalized.pdf")
 
 if __name__=="__main__":
     main()
