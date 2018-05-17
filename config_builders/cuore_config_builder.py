@@ -660,6 +660,7 @@ class BinnedConfigBuilder:
         binned_spectra_dict["output_path_prefix"] =  ""
         binned_spectra_dict["output_format"] = self.plots_output_format
         binned_spectra_dict["store_param_dists"] = True
+        binned_spectra_dict["store_param_fractions"] = False
         binned_spectra_dict["store_param_dists_dir"] = self.plots_output_dir+"/param_dists"
         binned_spectra_dict["make_individual_spectra"] = False
         binned_spectra_dict["make_stacked_spectra"] = False
@@ -715,6 +716,7 @@ class BinnedConfigBuilder:
             binned_spectra_dict["output_path_prefix"] =  self.data_set_names[i_data]+"_"
             binned_spectra_dict["output_format"] = self.plots_output_format
             binned_spectra_dict["store_param_dists"] = False
+            binned_spectra_dict["store_param_fractions"] = True
             binned_spectra_dict["store_param_dists_dir"] = self.plots_output_dir+"/param_dists"
             binned_spectra_dict["make_individual_spectra"] = True
             binned_spectra_dict["make_stacked_spectra"] = True

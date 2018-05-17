@@ -69,6 +69,8 @@ class ReconstructSpectrumProcessor:
 
         store_param_dists: Whether the results of a gaussian
             fit of each parameter distribution should be stored. (Default=True)
+        store_param_fractions: Whether the fraction of total events
+            that each parameter accounts for should be stored. (Default=True)
         store_param_dists_dir: Directory where the results of the
             gaussian fit should be stored (Default=output_dir/param_dists)
 
@@ -181,6 +183,8 @@ class ReconstructSpectrumProcessor:
 
         self.store_param_dists = \
             read_param(params, 'store_param_dists', True)
+        self.store_param_fractions = \
+            read_param(params, 'store_param_fractions', True)
         self.store_param_dists_dir = read_param(params, 'param_dists_dir',
                                                   self.output_dir+"/param_dists")
 
@@ -789,8 +793,42 @@ class ReconstructSpectrumProcessor:
                                                quantiles[2],
                                                quantiles[1]))
             param_dist_file.close()
-        return
 
+        if self.store_param_fractions:
+            dist_fractions_output_file = self.store_param_dists_dir + \
+                                         "/" + self.output_path_prefix + \
+                                         "param_fractions.txt"
+            param_fraction_file = open(dist_fractions_output_file, 'w')
+            p_name_col_width = 40
+            param_fraction_file.write(
+                "#P Num  " +
+                "Parameter Name".ljust(p_name_col_width) + "\t"
+                "Dist Mean   \t" +
+                "Dist Sigma  \t" +
+                "Fract\t" +
+                "Err         \t" +
+                "Err (%)   " +
+                "\n")
+            tot_counts_recon = 0
+            for i_bin, val in enumerate(self.tot_recon):
+                tot_counts_recon += self.bin_widths[i_bin]*val
+            for i_param, p in enumerate(self.reconstructed_param_dicts):
+                p_counts = 0
+                for i_bin, val in enumerate(p["shape"]):
+                    p_counts += self.bin_widths[i_bin]*val
+                frac = p["distribution_average"]*\
+                       float(p_counts)/float(tot_counts_recon)
+                error = p["distribution_sigma"]*\
+                        float(p_counts)/float(tot_counts_recon)
+                error_pct = error/frac
+                param_fraction_file.write(
+                    "%i\t%s\t%.5e\t%.5e\t%.5f\t%.5e\t%.5e\n"%
+                    (i_param+1,
+                     p["name"][:p_name_col_width-2].ljust(p_name_col_width, '.'),
+                     p["distribution_average"],
+                     p["distribution_sigma"],
+                     frac, error, error_pct))
+        return
 
 def reconstructed_spectrum(param_dict):
     """Create a spectrum reconstructed from stan parameters

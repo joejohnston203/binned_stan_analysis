@@ -1,0 +1,8 @@
+Bulk/130Te2nuIK-10M.root 1.0
+Bulk/ExtPb4cm-210Pb.root 1.0
+Bulk/40K10cmPbExt_cnaf110-10G.root 1.0
+Sup/PbRom-pb210-.01.root 1.0
+Bulk/InternalShields-k40.root 1.0
+AdHoc/BotExtPb-1460keV.root 1.0
+Bulk/50+600mK-pb210-1G-normSurf.root 1.0
+Bulk/40KOVC_cnaf70-1G.root 1.0

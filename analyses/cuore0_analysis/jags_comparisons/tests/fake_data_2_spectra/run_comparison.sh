@@ -77,9 +77,13 @@ while true; do
 	    fi
 	    . $morpho_venv_activate
 	    python ../../compare_stan_jags.py \
-		   stan_outputs/plots/param_dists/param_distribution_gauss_fits.txt \
 		   jags_outputs/JAGS_$fake_data_name/b2g-$fake_data_name'.txt' \
-		   comparison_outputs
+		   stan_outputs/plots/param_dists/param_distribution_gauss_fits.txt \
+		   stan_outputs/plots/param_dists/M1_param_fractions.txt \
+		   stan_outputs/plots/param_dists/M2_param_fractions.txt \
+		   stan_outputs/plots/param_dists/M2Sum_param_fractions.txt \
+		   comparison_outputs \
+		   shared_inputs/copied_norm_factors.txt
 	    deactivate
 	    echo "Finished Stan vs JAGS comparison"
 	    echo
