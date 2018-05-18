@@ -143,7 +143,12 @@ def main():
     jags_sigmas = []
     stan_means = []
     stan_sigmas = []
-    normalized_diffs = []
+    param_xvals = [[],[],[]]
+    normalized_diffs = [[],[],[]]
+    normalized_diffs_labels = ["mu-3sig>0, J and S",
+                               "mu-3sig>0, J or S",
+                               "mu-3sig<0, J and S"]
+    normalized_diffs_flat = []
     n_params = min(len(stan_gaus_fit), len(jags_gaus_fit))
     for  i_p in range(n_params):
         jags_name = jags_gaus_fit[i_p][0][:p_name_col_width-2].ljust(p_name_col_width, '.')
@@ -164,8 +169,18 @@ def main():
                     stan_disc,
                     stan_name)
         param_names += jags_name+", "+stan_name+"\n"
-        normalized_diffs.append((jags_means[-1]-stan_means[-1])/
-                                np.sqrt(jags_sigmas[-1]**2+stan_sigmas[-1]**2))
+        if jags_disc and stan_disc:
+            temp_idx = 0
+        elif jags_disc ^ stan_disc:
+            temp_idx = 1
+        elif (not jags_disc) and (not stan_disc):
+            temp_idx = 2
+        param_xvals[temp_idx].append(i_p+1)
+        normalized_diffs[temp_idx].append((jags_means[-1]-stan_means[-1])/
+                                          np.sqrt(jags_sigmas[-1]**2+stan_sigmas[-1]**2))
+        normalized_diffs_flat.append((jags_means[-1]-stan_means[-1])/
+                                     np.sqrt(jags_sigmas[-1]**2+stan_sigmas[-1]**2))
+        
 
     jags_means = np.array(jags_means)
     jags_sigmas = np.array(jags_sigmas)
@@ -182,8 +197,25 @@ def main():
 
     fig = plt.figure()
     param_indices = range(1, n_params+1)
-    plt.plot(param_indices, normalized_diffs,
-             linestyle="None", marker="o")
+    plt.fill_between(param_indices, -3., 3.,
+                     color="red")
+    plt.fill_between(param_indices, -2., 2.,
+                     color="yellow")
+    plt.fill_between(param_indices, -1., 1.,
+                     color="cyan")
+    plt.plot(param_xvals[0], normalized_diffs[0],
+             label=normalized_diffs_labels[0],
+             color="black",
+             linestyle="None", marker="o", markersize=5)
+    plt.plot(param_xvals[1], normalized_diffs[1],
+             label=normalized_diffs_labels[1],
+             color="black",
+             linestyle="None", marker="^", markersize=5)
+    plt.plot(param_xvals[2], normalized_diffs[2],
+             label=normalized_diffs_labels[2],
+             color="black",
+             linestyle="None", marker="*", markersize=5)
+    plt.legend(loc=0)
     plt.title("JAGS vs Stan, Marginal Distribution Gaussian Fits Comparison")
     plt.xlabel("Parameter Number")
     plt.ylabel("(mu_J-mu_S)/sqrt(sig_J**2+sig_S**2)")
@@ -191,7 +223,7 @@ def main():
 
 
     (pulls_hist, pulls_hist_edges) = \
-        np.histogram(normalized_diffs, bins=20, range=(-4, 4))
+        np.histogram(normalized_diffs_flat, bins=20, range=(-4, 4))
     curves = []
     curves.append((pulls_hist_edges, pulls_hist, "histo_error",
                    {"yerr":np.sqrt(pulls_hist), "color":"black"}))
@@ -199,7 +231,7 @@ def main():
         return np.exp(-x**2/2.)/np.sqrt(2.*np.pi)
     norm_gauss = np.vectorize(norm_gauss)
     x_pts = np.linspace(pulls_hist_edges[0], pulls_hist_edges[-1])
-    y_pts = norm_gauss(x_pts)*len(normalized_diffs)*\
+    y_pts = norm_gauss(x_pts)*len(normalized_diffs_flat)*\
             (pulls_hist_edges[1]-pulls_hist_edges[0])
     curves.append((x_pts, y_pts, "default",
                    {"color":"red"}))
