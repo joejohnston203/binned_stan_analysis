@@ -728,6 +728,7 @@ class ReconstructSpectrumProcessor:
                         else:
                             cl_90pct_lb = 0.
                             cl_90pct_ub = quantiles[2]
+                        shaded_bin_low = 0
                         for i_bin in range(1,nbins+1):
                             binning.append(param_hist.GetBinLowEdge(i_bin))
                             bin_centers.append(param_hist.GetBinCenter(i_bin))
@@ -812,22 +813,29 @@ class ReconstructSpectrumProcessor:
             tot_counts_recon = 0
             for i_bin, val in enumerate(self.tot_recon):
                 tot_counts_recon += self.bin_widths[i_bin]*val
-            for i_param, p in enumerate(self.reconstructed_param_dicts):
-                p_counts = 0
-                for i_bin, val in enumerate(p["shape"]):
-                    p_counts += self.bin_widths[i_bin]*val
-                frac = p["distribution_average"]*\
-                       float(p_counts)/float(tot_counts_recon)
-                error = p["distribution_sigma"]*\
-                        float(p_counts)/float(tot_counts_recon)
-                error_pct = error/frac
-                param_fraction_file.write(
-                    "%i\t%s\t%.5e\t%.5e\t%.5f\t%.5e\t%.5e\n"%
-                    (i_param+1,
-                     p["name"][:p_name_col_width-2].ljust(p_name_col_width, '.'),
-                     p["distribution_average"],
-                     p["distribution_sigma"],
-                     frac, error, error_pct))
+            if tot_counts_recon > 0:
+                for i_param, p in enumerate(self.reconstructed_param_dicts):
+                    p_counts = 0
+                    for i_bin, val in enumerate(p["shape"]):
+                        p_counts += self.bin_widths[i_bin]*val
+                    frac = p["distribution_average"]*\
+                           float(p_counts)/float(tot_counts_recon)
+                    error = p["distribution_sigma"]*\
+                            float(p_counts)/float(tot_counts_recon)
+                    if(frac!=0):
+                        error_pct = error/frac
+                    else:
+                        print("frac=0, so error_pct cannot be calculated")
+                        error_pct = float("inf")
+                    param_fraction_file.write(
+                        "%i\t%s\t%.5e\t%.5e\t%.5f\t%.5e\t%.5e\n"%
+                        (i_param+1,
+                         p["name"][:p_name_col_width-2].ljust(p_name_col_width, '.'),
+                         p["distribution_average"],
+                         p["distribution_sigma"],
+                         frac, error, error_pct))
+            else:
+                logger.warn("No reconstructed counts for spectrum %s"%self.output_path_prefix)
         return
 
 def reconstructed_spectrum(param_dict):
