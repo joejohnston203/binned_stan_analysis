@@ -6,7 +6,7 @@ Stan/morpho models to analyze the sensitivity of any experiment where the data c
   
   You will need to install root in order to have access to pyroot.
 
-  The files from morpho_modules need to be copied into morpho/morpho before installing root.
+  The files from morpho_modules need to be copied into morpho/morpho. Morpho may need to be reinstalled after copying.
   
 Directory Structure
 ======
@@ -79,7 +79,7 @@ The cuore-0 analysis creates a model that is the sum of many parameters, with ea
 
 The cuore config builder can be used to create the yaml file. cuore0_config_builder_simplified.yaml is a simplified file that referes only to shapes that are stored in the github repository. It can be used to generate a morpho config file and a stan model with the command:
 
-python ../../config_builders/cuore_config_builder.py -c scripts/config_builder/cuore0_config_builder_simplified.yaml
+python ../../config_builders/cuore_config_builder.py -c scripts_config_builder/cuore0_config_builder_simplified.yaml
 
 This will create a morpho scripts, "scripts/cuore0_analysis_simplified.yaml", and a stan model, "models/cuore0_analysis_simplified.stan".
 
