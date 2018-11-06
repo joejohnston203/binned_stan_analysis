@@ -25,18 +25,6 @@ Functions:
 
 ToDo:
 
-The priors should be specified in the yaml file used to
-generate the scripts. The shape of the priors should be
-hard coded into the stan model, but the parameters
-(eg gaussian mean, sigma) should be stored in a file that
-will be accessed by the stan model. This should minimize
-how often the stan model needs to be recompiled.
-
-For each gaussian prior, there should be an option to either
-center or not center the prior (default should be to center).
-
-Determine what priors are set in the JAGS anlysis
-
 I need to be able to multiply multiple likelihoods, eg M1+M2
 spectrum. But I think that can be handled without changing
 the processors I have written. I will still need a shape for
@@ -106,8 +94,8 @@ class BinnedConfigBuilder:
           - shape_output_dir: Output directory used to store parameter
             shapes (Default="data/binned_analysis/shapes")
           - misc_config_output_dir: Output directory used to store
-            miscellaneous configuration, for the Stan model, such as
-            prior configuration and the number of bins.
+            miscellaneous configuration for the Stan model, such as
+            the number of bins.
             (Default="data/binned_analysis/misc_config")
           - fake_data_output_dir: Output directory used to store fake data
             if generate_fake_data is True.
@@ -208,16 +196,8 @@ class BinnedConfigBuilder:
             be careful of clashes with Stan functions, etc).
           - lower_bound: Lower bound in Stan (Default=0.)
           - upper_bound: Upper bound in Stan (Required)
-          - prior: String specifying the name of the method used as a prior
-            in Stan (Default="None").
-          - prior_file: Function file containing the prior. "None"
-            specifies that the prior is a stan built-in, such as
-            "Normal". (Default="None")
-          - prior_args: List with arguments for the prior. (Default=[])
-          - prior_center: Boolean specifying whether the prior should
-            be centered at 0 with standard deviation 1. Can help
-            convergence for tight priors. Only works for "Normal".
-            (Default=True).
+          - prior: String, in Stan code, with the prior. Will add
+            'p_name ~ prior_string' to the morpho model. (Default=None)
           - hierarchical_gaussian: String specifying whether this
             parameter should be treated as a hierarchical parameter with
             the parameter being allowed to fluctuate about the global
@@ -430,9 +410,6 @@ class BinnedConfigBuilder:
         self.param_lower_bounds = []
         self.param_upper_bounds = []
         self.param_priors = []
-        self.param_prior_files = []
-        self.param_prior_args = []
-        self.param_prior_centers = []
         self.param_hierarchical_gaussians = []
         self.param_hierarchical_gaussian_fractions = []
         self.param_hierarchical_gaussian_centers = []
@@ -448,12 +425,6 @@ class BinnedConfigBuilder:
                 read_param(p, 'upper_bound', 'required'))
             self.param_priors.append(
                 read_param(p, 'prior', None))
-            self.param_prior_files.append(
-                read_param(p, 'prior_file', None))
-            self.param_prior_args.append(
-                read_param(p, 'prior_args', []))
-            self.param_prior_centers.append(
-                read_param(p, 'prior_center', True))
             self.param_hierarchical_gaussians.append(
                 read_param(p, 'hierarchical_gaussian', False))
             if (isinstance(self.param_hierarchical_gaussians[-1], basestring) and
@@ -871,6 +842,15 @@ class BinnedConfigBuilder:
         model += "}\n\n"
 
         model += "model {\n\n"
+        # Add Priors
+        for i_param, p_name in enumerate(self.param_names):
+            prior = self.param_priors[i_param]
+            if not (prior is None or
+                    prior=="None" or
+                    prior==""):
+                model += "  rate_%s ~ %s;\n"%(p_name, prior)
+        model += "\n"
+        # Update Likelihood
         model += "  for(i in 1:nBins_%s){\n"%d_name
         for i_data in range(self.num_data_sets):
             model += "    if(n_counts_recon_%i[i]>0){\n"%(i_data)+\
