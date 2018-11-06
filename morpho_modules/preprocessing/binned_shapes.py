@@ -30,6 +30,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import numpy as np
+import numbers
 
 from morpho.utilities.reader import read_param
 from morpho.utilities.file_reader import *
@@ -184,28 +185,10 @@ class GenerateShapesProcessor:
         self.save_debug = (not self.debug_dir=="")
 
         self.dimensions = read_param(params, 'dimensions', 'required')
-        self.parameters = read_param(params, 'parameters', 'required')
-
+        self.bin_dicts = []
         for d in self.dimensions:
-            read_param(d, 'name', 'required')
-            binning_type = read_param(d, 'binning_type', 'required')
-            if binning_type=="file":
-                read_param(d, 'binning_path', 'required')
-                read_param(d, 'binning_format', 'required')
-                d['binning_variables'] = read_param(d, 'binning_variables', None)
-            elif binning_type=="uniform":
-                read_param(d, 'n_bins', 'required')
-                read_param(d, 'lower_bound', 'required')
-                read_param(d, 'upper_bound', 'required')
-            elif binning_type=="algorithm":
-                read_param(d, 'binning_data_path', 'required')
-                read_param(d, 'binning_data_format', 'required')
-                d["binning_data_variables"] = read_param(d, 'binning_data_variables', None)
-            else:
-                logger.error("Invalid binning_type: %s"%binning_type)
-                logger.error("Not generating shapes")
-                self.generate_shapes = False
-                return
+            self.bin_dicts.append(read_param(d, 'binning', 'required'))
+        self.parameters = read_param(params, 'parameters', 'required')
 
         for p in self.parameters:
             read_param(p, 'name', 'required')
@@ -249,33 +232,124 @@ class GenerateShapesProcessor:
 
         logger.info("Generating and storing binnings")
         self.binnings = list()
-        for d in self.dimensions:
-            binning_type = read_param(d, 'binning_type', 'required')
-            if binning_type=="file":
-                binning_path = read_param(d, 'binning_path', 'required')
-                binning_format = read_param(d, 'binning_format', 'required')
-                binning_variables = d["binning_variables"]
-                binning = get_variable_from_file(binning_path, binning_format,
-                                                 binning_variables)
-                self.binnings.append(np.array(binning))
-            elif binning_type=="uniform":
-                n_bins = read_param(d, 'n_bins', 'required')
-                lb = read_param(d, 'lower_bound', 'required')
-                ub = read_param(d, 'upper_bound', 'required')
-                binning = np.linspace(lb, ub, n_bins+1, endpoint=True)
-                self.binnings.append(binning)
-            elif binning_type=="algorithm":
-                binning_algorithm = read_param(d, 'binning_algorithm', "default")
-                if not binning_algorithm=="default":
-                    logger.info("Currently only the default binning algorithm is implemented. Using default.")
-                lb = read_param(d, 'lower_bound', 'required')
-                ub = read_param(d, 'upper_bound', 'required')
+        for i_dim, d in enumerate(self.dimensions):
+            # Determine binning
+            bin_dict = self.bin_dicts[i_dim]
+            bin_min = read_param(bin_dict, 'min', None)
+            bin_max = read_param(bin_dict, 'max', None)
+            bin_min_width = read_param(bin_dict, 'min_bin_width', None)
+
+            bin_include_peaks = (not bin_min is None and
+                                 not bin_max is None and
+                                 read_param(bin_dict, 'include_peaks', False))
+            if bin_include_peaks:
+                try:
+                    bin_peak_means = \
+                        get_variable_from_file(
+                            read_param(bin_dict, 'peak_means_path', None),
+                            read_param(bin_dict, 'peak_means_format', None),
+                            read_param(bin_dict, 'peak_means_variables', None))
+                    bin_peak_widths = \
+                        get_variable_from_file(
+                            read_param(bin_dict, 'peak_widths_path', None),
+                            read_param(bin_dict, 'peak_widths_format', None),
+                            read_param(bin_dict, 'peak_widths_variables', None))
+                except Exception as e:
+                    logger.info("Faled to read peaks with exception %s"%e)
+                    bin_peak_means = None
+                    bin_peak_widths = None
+                if (bin_peak_means is None or
+                    bin_peak_widths is None):
+                    logger.info("Not including peaks because means and/or widths were not provided")
+                    bin_include_peaks = False
+            if not bin_include_peaks:
+                bin_peak_means = []
+                bin_peak_widths = []
+
+            bin_merge_low_stats = read_param(bin_dict, 'merge_low_stats', False)
+            if bin_merge_low_stats:
+                bin_min_counts = read_param(bin_dict, 'min_bin_counts', 'required')
                 data_path = read_param(d, 'binning_data_path', 'required')
                 data_format = read_param(d, 'binning_data_format', 'required')
                 data_variables = read_param(d, 'binning_data_variables', None)
                 data = get_variable_from_file(data_path, data_format,
                                               data_variables)
-                self.binnings.append(binning_algorithm_default(lb, ub, data, None))
+            rebin_regions = []
+            for rebin_region_dict in read_param(bin_dict, 'rebin_regions', []):
+                try:
+                    curr_region = \
+                        get_variable_from_file(
+                            read_param(rebin_region_dict, 'path', None),
+                            read_param(rebin_region_dict, 'format', None),
+                            read_param(rebin_region_dict, 'variables', None))
+                except Exception as e:
+                    logger.info("Failed to read rebin_region with exception %s"%e)
+                    curr_region = None
+                if not curr_region is None:
+                    rebin_regions.append(curr_region)
+
+            binning = []
+            if (isinstance(bin_min, numbers.Number) and
+                isinstance(bin_max, numbers.Number)):
+                binning = [bin_min]
+                for i_peak in range(min(len(bin_peak_means),
+                                        len(bin_peak_widths))):
+                    last_bin = binning[-1]
+                    mean = bin_peak_means[i_peak]
+                    width = bin_peak_widths[i_peak]
+                    peak_min = mean-width
+                    peak_max = mean+width
+
+                    if peak_max <= bin_min:
+                        continue
+                    elif peak_min <= bin_min:
+                        binning.append(peak_max)
+                        continue
+
+                    if peak_min - last_bin < 0.:
+                        binning[-1] = peak_max
+                    elif peak_min - last_bin < bin_min_width:
+                        if last_bin != bin_min:
+                            binning[-1] = 0.5*(last_bin+peak_min)
+                        binning.append(peak_max)
+                    else:
+                        n_divisions = int((peak_min-last_bin)//bin_min_width)
+                        step = (peak_min-last_bin)/float(n_divisions)
+                        for j in range(1, n_divisions):
+                            binning.append(last_bin + j*step)
+                        binning.append(peak_min)
+                        binning.append(peak_max)
+                last_bin = binning[-1]
+                if last_bin < bin_max:
+                    n_divisions = int((bin_max - last_bin)//bin_min_width)
+                    if(n_divisions > 0):
+                        step = (bin_max-last_bin)/float(n_divisions)
+                        for j in range(1, n_divisions):
+                            binning.append(last_bin + j*step)
+                    binning.append(bin_max)
+            if len(binning)>0:
+                binning.sort()
+
+            if bin_merge_low_stats:
+                print("Merge low stats here- implement this")
+
+            for rebin_list in rebin_regions:
+                rebin_list.sort()
+                rebin_min = min(rebin_list)
+                rebin_max = max(rebin_list)
+                i_bin = 0
+                while(i_bin<len(binning) and
+                      binning[i_bin]<rebin_min):
+                    i_bin += 1
+                while(i_bin<len(binning) and
+                      binning[i_bin]<rebin_max):
+                    binning.pop(i_bin)
+                for new_bin in rebin_list:
+                    binning.insert(i_bin, new_bin)
+                    i_bin += 1
+            self.binnings.append(np.array(binning))
+
+            # Store Binning
             d_name = read_param(d, 'name', 'required')
             if self.output_format=="text":
                 binning_output_path = self.output_dir + "/" + \

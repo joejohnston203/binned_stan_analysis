@@ -54,6 +54,7 @@ import logging
 logger = logging.getLogger()
 
 import yaml
+yaml.Dumper.ignore_aliases = lambda *args : True
 from argparse import ArgumentParser
 
 import numpy as np
@@ -134,38 +135,7 @@ class BinnedConfigBuilder:
             variables, so should not start with a number or symbol, and
             be careful of clashes with Stan functions, etc).
             (required).
-          - binning_type: How binning should be determined. Options are
-            "file", "uniform", or "algorithm". If file, then a file must
-            give the N+1 bin edges defining the bins. If "uniform", then
-            N equally spaced bins between a lower bound and upper bound
-            will be used. If "algorithm", then a given algorithm will be
-            used to determine the binning based on a given dataset.
-            (Default="uniform")
-          - binning_path: Path to file containing binning (required if
-            binning_type=="file", Default=None)
-          - binning_format: Format of binning file. Options are "text",
-            "root", and "R". (required for "file", Default=None)
-          - binning_variables: Variables used to access the binning. For
-            "text", pass a string specifying elements ("1,:" specifies
-            second row, ":,1" specifies second column, ":" or ":,:" specifies all).
-            For "root", pass a length 2 list, ["tree_name","branch_name"].
-            For "R", pass a string giving the variable name.
-          - n_bins: Number of bins (required for "uniform")
-          - lower_bound, upper_bound: Lower and upper bound for the
-            dimension (required for "uniform" or "algorithm")
-          - binning_algorithm: Algorithm used to determine the binning
-            based on a dataset. Currently the only option is "default".
-          - binning_data_path: Path to data used by the algorithm to
-            determine binning. The data should be a list of values that will
-            be histogrammed. (required for "algorithm").
-          - binning_data_format: Format of the data file. Options are "text",
-            "root", and "R". (required for "algorithm")
-          - binning_data_variables: Variables used to access the data. For
-            "text", pass a string specifying elements ("1,:" specifies
-            second row, ":,1" specifies second column, ":" or ":,:" specifies all).
-            For "root", pass a length 2 list, ["tree_name","branch_name"].
-            For "R", pass a string giving the variable name. (required for "algorithm")
-    
+
         generate_fake_data: Boolean specifying whether fake data should
             be generated. If true, fake data will be generated, stored,
             then passed to all future modules. If False, then data will
@@ -186,6 +156,26 @@ class BinnedConfigBuilder:
             should be a length 2 list specifying a tree and a branch name.
             For R, should be a string specifying the variable name.
             (required if generate_fake_data==False)
+          - binning: Settings for determining binning. The following
+            should be included for each data set (required)
+              - min, max: Minimum and maximum. Optional if a rebin region
+                is given, but if they are given, they will override all
+              - binning described below if it would go outside the range.
+              - min_bin_width: Bin width to be used when creating binning
+                between max and min. The largest number of bins possible will
+                be created such that the bin width is still larger than the minimum.
+              - include_peaks: Whether bins should be added for the given peaks
+              - peak_means_path, peak_means_format, peak_means_variables,
+                peak_widths_path, peak_widths_format, peak_widths_variables:
+                Files with lists of peaks to be included in the binning, such
+                that the binning still respects the given minimum bin width
+              - merge_low_stats_bins: If data is given, then the number of counts
+                in each bin can be considered, and bins can be merged if the
+                number of counts is less than a given min
+              - min_bin_counts: Minimum number of counts if merge_low_stats_bins
+                is true
+              - rebin_regions: Dictionaries giving a path, format, and variables
+                with lists of bin edges for regions that should be overridden
 
         parameters: List of dictionaries containing the parameters that
             will go into the model. Each should contain the following
@@ -347,35 +337,7 @@ class BinnedConfigBuilder:
         self.stan_dict["run"]["chain"] = \
             read_param(self.stan_dict["run"], 'chain', 1)
 
-        self.dimension = \
-            read_param(params, 'dimension', 'required')
-        self.dim_name = read_param(self.dimension, 'name', 'required')
-        '''self.dim_names = []
-        self.binning_types = []
-        self.binning_paths = []
-        self.binning_formats  = []
-        self.binning_variables = []
-        self.n_bins = []
-        self.lower_bounds = []
-        self.upper_bounds = []
-        self.binning_algorithms = []
-        self.binning_data_paths = []
-        self.binning_data_formats = []
-        self.binning_data_variables = []
-        for dim in self.dimensions:
-            self.dim_names.append(read_param(dim, 'name', 'required'))
-            self.binning_types.append(read_param(dim, 'binning_type', 'uniform'))
-            self.binning_paths.append(read_param(dim, 'binning_path', None))
-            self.binning_formats.append(read_param(dim, 'binning_format', None))
-            self.binning_variables.append(read_param(dim, 'binning_variables', None))
-            self.n_bins.append(read_param(dim, 'n_bins', None))
-            self.lower_bounds.append(read_param(dim, 'lower_bound', None))
-            self.upper_bounds.append(read_param(dim, 'upper_bound', None))
-            self.binning_algorithms.append(read_param(dim, 'binning_algorithm', "default"))
-            self.binning_data_paths.append(read_param(dim, 'binning_data_path', None))
-            self.binning_data_formats.append(read_param(dim, 'binning_data_format', None))
-            self.binning_data_variables.append(read_param(dim, 'binning_data_variables', None))'''
-
+        self.dim_name = read_param(params, 'dimension_name', 'required')
 
         self.generate_fake_data = read_param(params, 'generate_fake_data', False)
         self.data_sets = read_param(params, 'data', 'required')
@@ -384,6 +346,7 @@ class BinnedConfigBuilder:
         self.load_data_paths = []
         self.load_data_formats = []
         self.load_data_variables = []
+        self.binnings = []
         for i_data,data in enumerate(self.data_sets):
             self.data_set_names.append(read_param(data, 'name', "Data_Set_%i"%i_data))
             self.load_data_paths.append(read_param(data, 'load_data_path', None))
@@ -392,6 +355,7 @@ class BinnedConfigBuilder:
                 logger.error("Currently 'root values' is the only supported format for data."
                              + "%s' is invalid."%self.load_data_formats[-1])
             self.load_data_variables.append(read_param(data, 'load_data_variable', None))
+            self.binnings.append(read_param(data, 'binning', 'required'))
 
         self.shapes_files = []
         self.binning_files = []
@@ -513,7 +477,10 @@ class BinnedConfigBuilder:
             bin_shapes["output_dir"] = self.shape_output_dir
             bin_shapes["output_path_prefix"] = self.data_set_names[i_data] + "_"
             bin_shapes["output_format"] = "R"
-            bin_shapes["dimensions"] = [self.dimension]
+            bin_shapes_dimension = UnsortableOrderedDict()
+            bin_shapes_dimension["name"] = self.dim_name
+            bin_shapes_dimension["binning"] = self.binnings[i_data]
+            bin_shapes["dimensions"] = [bin_shapes_dimension]
             bin_shapes_params = list()
             for i_param in range(self.num_params):
                 bin_shapes_params.append(
