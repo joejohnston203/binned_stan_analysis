@@ -25,6 +25,9 @@ Functions:
 
 ToDo:
 
+Update binning so that min and max are always enforced if they
+are given.
+
 I need to be able to multiply multiple likelihoods, eg M1+M2
 spectrum. But I think that can be handled without changing
 the processors I have written. I will still need a shape for
@@ -147,20 +150,14 @@ class BinnedConfigBuilder:
             should contain the following fields:
           - name: Name of the data set, used for storing and titling plots
             (Default="Data_Set_i")
-          - load_data_path: Path to data that will be loaded if
-            generate_fake_data is False.
-            (required if generate_fake_data==False)
-          - load_data_format: Format for loaded data. Options are "text",
-            "root", or "R". (required if generate_fake_data==False)
-          - load_data_variable: Variale used to access the data. For root,
-            should be a length 2 list specifying a tree and a branch name.
-            For R, should be a string specifying the variable name.
+          - load_data_path, load_data_format, load_data_variable: Information
+            for data that will be loaded if generate_fake_data is False.
+            See file_reader.get_histo_shape_from_file for more details
             (required if generate_fake_data==False)
           - binning: Settings for determining binning. The following
             should be included for each data set (required)
               - min, max: Minimum and maximum. Optional if a rebin region
-                is given, but if they are given, they will override all
-              - binning described below if it would go outside the range.
+                is given.
               - min_bin_width: Bin width to be used when creating binning
                 between max and min. The largest number of bins possible will
                 be created such that the bin width is still larger than the minimum.
@@ -480,6 +477,10 @@ class BinnedConfigBuilder:
             bin_shapes_dimension = UnsortableOrderedDict()
             bin_shapes_dimension["name"] = self.dim_name
             bin_shapes_dimension["binning"] = self.binnings[i_data]
+            if not self.generate_fake_data:
+                bin_shapes_dimension["binning_data_path"] = self.load_data_paths[i_data]
+                bin_shapes_dimension["binning_data_format"] = self.load_data_formats[i_data]
+                bin_shapes_dimension["binning_data_variables"] = self.load_data_variables[i_data]
             bin_shapes["dimensions"] = [bin_shapes_dimension]
             bin_shapes_params = list()
             for i_param in range(self.num_params):
@@ -492,12 +493,9 @@ class BinnedConfigBuilder:
                 )
             # Put the shape of the data in the file
             if not self.generate_fake_data:
-                bin_shapes["binning_data_path"] = self.load_data_paths[i_data]
-                bin_shapes["binning_data_format"] = self.load_data_formats[i_data]
-                bin_shapes["binning_data_variables"] = self.load_data_variables[i_data]
                 if self.load_data_formats[i_data]=="root values":
-                    if len(self.load_data_variables[i_data])<3:
-                        self.load_data_variables.append("") # Third element should be a cut
+                    if not "cut" in self.load_data_variables[i_data]:
+                        self.load_data_variables[i_data]["cut"] = ""
                     bin_shapes_params.append(
                         {
                             "name":self.data_set_names[i_data],
@@ -505,9 +503,9 @@ class BinnedConfigBuilder:
                             "shapes": [{
                                 "path": self.load_data_paths[i_data],
                                 "format": self.load_data_formats[i_data],
-                                "tree": self.load_data_variables[i_data][0],
-                                "branches": [self.load_data_variables[i_data][1]],
-                                "cut": self.load_data_variables[i_data][2],
+                                "tree": self.load_data_variables[i_data]["tree"],
+                                "branches": self.load_data_variables[i_data]["branches"],
+                                "cut": self.load_data_variables[i_data]["cut"],
                                 "renormalize":False,
                                 "multiply_shape":1.0,
                                 "number_save_type": "int64"
@@ -612,7 +610,8 @@ class BinnedConfigBuilder:
         binned_spectra_dict["make_param_dist_plots"] = True
         binned_spectra_dict["binning_file"] = self.binning_files[0]
         binned_spectra_dict["binning_file_format"] = "R"
-        binned_spectra_dict["binning_file_variable"] = self.dim_name
+        binned_spectra_dict["binning_file_variable"] = "%s_%s_binning"%(self.data_set_names[0],
+                                                                        self.dim_name)
         binned_spectra_dict["divide_by_bin_width"] = True
         binned_spectra_dict["xlabel"] = "Energy (keV)"
         binned_spectra_dict["ylabel"] = "Counts/keV"
@@ -668,7 +667,8 @@ class BinnedConfigBuilder:
             binned_spectra_dict["make_param_dist_plots"] = False
             binned_spectra_dict["binning_file"] = self.binning_files[i_data]
             binned_spectra_dict["binning_file_format"] = "R"
-            binned_spectra_dict["binning_file_variable"] = self.dim_name
+            binned_spectra_dict["binning_file_variable"] = "%s_%s_binning"%(self.data_set_names[i_data],
+                                                                            self.dim_name)
             binned_spectra_dict["divide_by_bin_width"] = True
             binned_spectra_dict["xlabel"] = "Energy (keV)"
             binned_spectra_dict["ylabel"] = "Counts/keV"
@@ -775,15 +775,17 @@ class BinnedConfigBuilder:
                 "functions {\n\n}\n\n"
 
         model += "data {\n\n"+\
-                "  int nBins_%s;\n\n"%d_name+\
-                "  // Fake Data\n"
+                 "  // Data\n"
         for i_data in range(self.num_data_sets):
-            model += "  int %s_%s[nBins_%s];\n"%(self.data_set_names[i_data], d_name, d_name)
+            model += "  int %s_nBins_%s;\n"%(self.data_set_names[i_data],d_name)
+            model += "  int %s_%s[%s_nBins_%s];\n"%(self.data_set_names[i_data],d_name,
+                                                    self.data_set_names[i_data],d_name)
         model += "\n"
         for i_data in range(self.num_data_sets):
             model += "  // %s Shapes \n"%self.data_set_names[i_data]
             for p_name in self.param_names:
-                model += "  vector[nBins_%s] %s_%i_%s;\n"%(d_name,p_name,i_data,d_name)
+                model += "  vector[%s_nBins_%s] %s_%i_%s;\n"%(self.data_set_names[i_data],
+                                                              d_name,p_name,i_data,d_name)
             model += "\n"
         model += "}\n\n"
 
@@ -797,11 +799,14 @@ class BinnedConfigBuilder:
 
         model += "transformed parameters {\n\n"
         for i_data in range(self.num_data_sets):
-            model += "  real n_counts_recon_%i[nBins_%s];\n"%(i_data,d_name)
+            model += "  real %s_n_counts_recon_%i[%s_nBins_%s];\n"%(self.data_set_names[i_data],
+                                                                    i_data,
+                                                                    self.data_set_names[i_data],
+                                                                    d_name)
         model += "\n"
         for i_data in range(self.num_data_sets):
-            model += "  for(i in 1:nBins_%s){\n"%d_name+\
-                     "    n_counts_recon_%i[i] =\n"%i_data
+            model += "  for(i in 1:%s_nBins_%s){\n"%(self.data_set_names[i_data],d_name)+\
+                     "    %s_n_counts_recon_%i[i] =\n"%(self.data_set_names[i_data],i_data)
             for i_param, p_name in enumerate(self.param_names):
                 model += "      rate_%s*%s_%i_%s[i]+\n"%(p_name,p_name,i_data,d_name)
             model = model[:-2] + ";\n"
@@ -818,13 +823,15 @@ class BinnedConfigBuilder:
                 model += "  rate_%s ~ %s;\n"%(p_name, prior)
         model += "\n"
         # Update Likelihood
-        model += "  for(i in 1:nBins_%s){\n"%d_name
         for i_data in range(self.num_data_sets):
-            model += "    if(n_counts_recon_%i[i]>0){\n"%(i_data)+\
-                     "      target += poisson_lpmf(%s_%s[i] | n_counts_recon_%i[i]);\n"%\
-                     (self.data_set_names[i_data], d_name,i_data)+\
+            model += "  for(i in 1:%s_nBins_%s){\n"%(self.data_set_names[i_data],d_name)
+            model += "    if(%s_n_counts_recon_%i[i]>0){\n"%(self.data_set_names[i_data],i_data)+\
+                     "      target += poisson_lpmf(%s_%s[i] | %s_n_counts_recon_%i[i]);\n"%\
+                     (self.data_set_names[i_data], d_name,self.data_set_names[i_data],i_data)+\
                      "    }\n"
-        model += "  }\n\n}\n"
+            model += "  }\n\n"
+
+        model += "}\n"
 
         return model
 

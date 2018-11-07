@@ -18,7 +18,6 @@ Classes:
   - GenerateShapesProcessor: Class to create and store shapes
 
 Functions:
-  - binning_algorithm_default: Determine binning from data
   - generate_shapes: Create and store shapes
 
 ToDo:
@@ -63,39 +62,29 @@ class GenerateShapesProcessor:
             dimension of the analysis (eg "energy" and "time"). (required).
             Each dictionary must contain the following keys:
           - name: Name of the dimension
-          - binning_type: How binning should be determined. Options are
-            "file", "uniform", or "algorithm". If file, then a file must
-            give the N+1 bin edges defining the bins. If "uniform", then
-            N equally spaced bins between a lower bound and upper bound
-            will be used. If "algorithm", then a given algorithm will be
-            used to determine the binning based on a given dataset.
-          - binning_path: Path to file containing binning (required if
-            binning_type=="file")
-          - binning_format: Format of binning file. Options are "text",
-            "root", and "R". (required for "file")
-          - binning_variables: Variables used to access the binning. For
-            "text", pass a string specifying elements ("1,:" specifies
-            second row, ":,1" specifies second column, ":" or ":,:" specifies all).
-            For "root", pass a length 2 list, ["tree_name","branch_name"].
-            For "R", pass a string giving the variable name.
-          - binning_columns, binning_tree, binning_branches, 
-            binning_var_names: Info to access the binning data from the
-            given file. See shapes settings below. Required for "text".
-          - n_bins: Number of bins (required for "uniform")
-          - lower_bound, upper_bound: Lower and upper bound for the
-            dimension (required for "uniform" or "algorithm")
-          - binning_algorithm: Algorithm used to determine the binning
-            based on a dataset. Currently the only option is "default".
-          - binning_data_path: Path to data used by the algorithm to
-            determine binning. The data should be a list of values that will
-            be histogrammed. (required for "algorithm").
-          - binning_data_format: Format of the data file. Options are "text",
-            "root", and "R". (required for "algorithm")
-          - binning_data_variables: Variables used to access the data. For
-            "text", pass a string specifying elements ("1,:" specifies
-            second row, ":,1" specifies second column, ":" or ":,:" specifies all).
-            For "root", pass a length 2 list, ["tree_name","branch_name"].
-            For "R", pass a string giving the variable name. (required for "algorithm")
+          - binning: Settings for determining binning. The following
+            should be included for each data set (required)
+              - min, max: Minimum and maximum. Optional if a rebin region
+                is given.
+              - min_bin_width: Bin width to be used when creating binning
+                between max and min. The largest number of bins possible will
+                be created such that the bin width is still larger than the minimum.
+              - include_peaks: Whether bins should be added for the given peaks
+              - peak_means_path, peak_means_format, peak_means_variables,
+                peak_widths_path, peak_widths_format, peak_widths_variables:
+                Files with lists of peaks to be included in the binning, such
+                that the binning still respects the given minimum bin width
+              - merge_low_stats_bins: If data is given, then the number of counts
+                in each bin can be considered, and bins can be merged if the
+                number of counts is less than a given min
+              - min_bin_counts: Minimum number of counts if merge_low_stats_bins
+                is true
+              - rebin_regions: Dictionaries giving a path, format, and variables
+                with lists of bin edges for regions that should be overridden
+          - binning_data_path, binning_data_format, binning_data_variable: Information
+            for data that will be loaded if generate_fake_data is False.
+            See file_reader.get_histo_shape_from_file for more details
+            (required if generate_fake_data==False)
 
         parameters: List dictionaries containing information about the 
             parameters that shapes should be generated for. (required).
@@ -266,14 +255,12 @@ class GenerateShapesProcessor:
                 bin_peak_means = []
                 bin_peak_widths = []
 
-            bin_merge_low_stats = read_param(bin_dict, 'merge_low_stats', False)
+            bin_merge_low_stats = read_param(bin_dict, 'merge_low_stats_bins', False)
             if bin_merge_low_stats:
                 bin_min_counts = read_param(bin_dict, 'min_bin_counts', 'required')
                 data_path = read_param(d, 'binning_data_path', 'required')
                 data_format = read_param(d, 'binning_data_format', 'required')
                 data_variables = read_param(d, 'binning_data_variables', None)
-                data = get_variable_from_file(data_path, data_format,
-                                              data_variables)
             rebin_regions = []
             for rebin_region_dict in read_param(bin_dict, 'rebin_regions', []):
                 try:
@@ -331,8 +318,34 @@ class GenerateShapesProcessor:
                 binning.sort()
 
             if bin_merge_low_stats:
-                print("Merge low stats here- implement this")
+                binned_data = get_histo_shape_from_file(
+                    binning, data_path, data_format, data_variables, False)[0]
+                sum_counts = 0
+                next_counts = 0
+                reset_counts = False
+                bin_edges_to_remove = []
+                for i_bd in range(len(binned_data)):
+                    counts = binned_data[i_bd]
+                    if i_bd<len(binned_data)-1:
+                        next_counts = binned_data[i_bd+1]
+                    else:
+                        next_counts = 0
+                    if reset_counts:
+                        sum_counts = counts
+                        reset_counts = False
+                    else:
+                        sum_counts += counts
 
+                    if (next_counts < 3*bin_min_counts and
+                        sum_counts<bin_min_counts and
+                        i_bd+1<len(binned_data)):
+                        bin_edges_to_remove.append(i_bd+1)
+                    else:
+                        reset_counts = True
+                for i_elt, edge in enumerate(bin_edges_to_remove):
+                    binning.pop(edge-i_elt)
+
+            print("binning before alpha: %s"%binning)
             for rebin_list in rebin_regions:
                 rebin_list.sort()
                 rebin_min = min(rebin_list)
@@ -342,11 +355,13 @@ class GenerateShapesProcessor:
                       binning[i_bin]<rebin_min):
                     i_bin += 1
                 while(i_bin<len(binning) and
-                      binning[i_bin]<rebin_max):
+                      binning[i_bin]<=rebin_max):
                     binning.pop(i_bin)
+                print("binning after popping: %s"%binning)
                 for new_bin in rebin_list:
                     binning.insert(i_bin, new_bin)
                     i_bin += 1
+                print("binning after inserting: %s"%binning)
             self.binnings.append(np.array(binning))
 
             # Store Binning
@@ -361,21 +376,25 @@ class GenerateShapesProcessor:
                 binning_output_path = self.output_dir + "/" + \
                                       self.output_path_prefix + \
                                       "binnings.root"
-                binning_var_name = [d_name, d_name]
+                binning_var_name = [self.output_path_prefix+d_name+"_binning",
+                                    self.output_path_prefix+d_name+"_binning"]
             else:
                 binning_output_path = self.output_dir + "/" + \
                                       self.output_path_prefix + \
                                       "binnings.out"
-                binning_var_name = d_name
+                binning_var_name = self.output_path_prefix+d_name+"_binning"
+            print("binning_var_name: %s"%binning_var_name)
             write_variable_to_file(binning_output_path, self.output_format,
                                    self.binnings[-1],
                                    binning_var_name, False)
             logger.info("\tBinning for dimension %s stored at %s"%
-                        (d_name, binning_output_path))
+                        (self.output_path_prefix+d_name+"_binning",
+                         binning_output_path))
             binning_n_bins = len(self.binnings[-1])-1
             write_variable_to_file(self.output_dir + "/" + \
                                    self.output_path_prefix + "binnings.out",
-                                   "R", binning_n_bins, "nBins_%s"%d_name)
+                                   "R", binning_n_bins,
+                                   "%snBins_%s"%(self.output_path_prefix,d_name))
 
 
         logger.info("Generating and storing parameter shapes")
@@ -434,19 +453,6 @@ class GenerateShapesProcessor:
                 logger.info("\tShapes for parameter %s stored at %s"%
                             (p_name, shape_output_path))
         return
-
-def binning_algorithm_default(lb, ub, data, args):
-    """Algorithm to determine binning given data
-
-    Args:
-        lb, ub: Lower bound and upper bound for the binning
-        data: List of data point to histogram when determining
-            binning
-        args: Other arguments (will be expanded later)
-    """
-    logger.warn("binning algorithm not yet implemented")
-    logger.warn("Using 20 uniform bins between %s, %s"%(lb,ub))
-    return np.linspace(lb, ub, 21, endpoint=True)
 
 def generate_shapes(param_dict):
     """Generates and stores binned spectra shapes
