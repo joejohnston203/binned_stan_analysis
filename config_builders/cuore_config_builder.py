@@ -277,6 +277,13 @@ class BinnedConfigBuilder:
         return
 
     def Configure(self, params):
+        self.do_preprocessing = \
+            read_param(params, 'do_preprocessing', True)
+        self.do_stan = \
+            read_param(params, 'do_stan', True)
+        self.do_plots = \
+            read_param(params, 'do_plots', True)
+
         self.generate_morpho_config = \
             read_param(params, 'generate_morpho_config', True)
         self.morpho_config_output_path = \
@@ -378,8 +385,11 @@ class BinnedConfigBuilder:
         self.param_shapes = [] 
 
         for p in self.parameters:
-            self.param_names.append(
-                read_param(p, 'name', 'required'))
+            temp_p_name = read_param(p, 'name', 'required')
+            # If the data is stored in an r file, starting with num and - are not allowed
+            if temp_p_name[0].isdigit():
+                temp_p_name = "p_%s"%temp_p_name
+            self.param_names.append(temp_p_name.replace('-','_').replace('.','_'))
             self.param_lower_bounds.append(
                 read_param(p, 'lower_bound', 0.))
             self.param_upper_bounds.append(
@@ -456,9 +466,9 @@ class BinnedConfigBuilder:
 
         # Morpho global configuration
         morpho = UnsortableOrderedDict()
-        morpho["do_preprocessing"] = True
-        morpho["do_stan"] = True
-        morpho["do_plots"] = True
+        morpho["do_preprocessing"] = self.do_preprocessing
+        morpho["do_stan"] = self.do_stan
+        morpho["do_plots"] = self.do_plots
 
         morpho_config_dict["morpho"] = morpho
 

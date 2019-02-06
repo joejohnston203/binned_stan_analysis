@@ -143,9 +143,17 @@ def mpl_plot_curves(curves, output_path,
     plt.ylabel(ylabel)
 
     if(xlog):
-        plt.gca().set_xscale('log')
+        try:
+            plt.gca().set_xscale('log')
+        except ValueError as e:
+            logger.warn("Could not log scale x. Error: %s"%e)
+            plt.gca().set_xscale('linear')
     if(ylog):
-        plt.gca().set_yscale('log')
+        try:
+            plt.gca().set_yscale('log')
+        except ValueError as e:
+            logger.warn("Could not log scale y. Error: %s"%e)
+            plt.gca().set_yscale('linear')
 
     legend_dict = {}
     if(not legend_size is None):
