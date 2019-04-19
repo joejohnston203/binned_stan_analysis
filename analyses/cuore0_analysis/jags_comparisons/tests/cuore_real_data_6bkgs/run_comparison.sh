@@ -6,9 +6,9 @@
 # jags2root, MergeModel-3.0.pl, PrepareDataMult
 
 morpho_venv_activate='/home/joe/MIT_Dropbox/research/stat_code/venv_1.4.1/bin/activate'
-fake_data_dir='../../../data/fake_data/'
-fake_data_name='fake_data_2_sim'
-simulations_dir='../../../data/simulations/'
+fake_data_dir='shared_inputs/'
+fake_data_name='fake_data_cuore_6_sim'
+simulations_dir='../../../data/simulations_cuore/reduced_sims/combined_trees/'
 
 while true; do
     read -p "Run Stan analysis? " yn
@@ -19,7 +19,7 @@ while true; do
 		   -c stan_inputs/config_builder.yaml
 	    echo "Stan and Morpho config files generated. Press any key to continue."
 	    read -n 1 -s
-	    morpho -c stan_outputs/cuore0_analysis.yaml
+	    morpho -c stan_outputs/cuore_fd_analysis.yaml
 	    echo "Finished running Stan"
 	    echo
 	    deactivate
@@ -37,11 +37,15 @@ while true; do
     case $yn in
         [Yy]* )
 	    CWD=`pwd`
-	    cd jags_inputs
+            mkdir jags_outputs
+            cp -r jags_inputs/* jags_outputs/
+            cp shared_inputs/Alpha* jags_outputs/
+            cp shared_inputs/PeakList* jags_outputs/
+	    cd jags_outputs
 	    ls
 	    PrepareDataMult ../$fake_data_dir$fake_data_name'.root' \
 			    ListMC.txt ../$simulations_dir \
-			    M1 M2 M2sum
+			    M1L0 M1L1 M2 M2sum
 	    echo "JAGS data prepared. Press any key to continue"
 	    read -n 1 -s
 	    cd JAGS_$fake_data_name
@@ -82,7 +86,7 @@ while true; do
 		   stan_outputs/plots/param_dists/M1_param_fractions.txt \
 		   stan_outputs/plots/param_dists/M2_param_fractions.txt \
 		   stan_outputs/plots/param_dists/M2Sum_param_fractions.txt \
-		   comparison_outputs \
+	           comparison_outputs \
 		   shared_inputs/copied_norm_factors.txt
 	    deactivate
 	    echo "Finished Stan vs JAGS comparison"

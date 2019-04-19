@@ -1,0 +1,6 @@
+2nuFIJK-100M.root 0
+CuNOSV-k40.root	0
+CuNOSV-co60.root	0
+TopPb5cm_210Bi_cnaf136.root	0
+TeO2Sx-pb210-.001_cnaf14.root	0
+CuNOSVTowerSx-pb210-.01.root	0
