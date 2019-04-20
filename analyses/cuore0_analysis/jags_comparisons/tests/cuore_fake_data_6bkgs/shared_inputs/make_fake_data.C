@@ -3,7 +3,8 @@
 void make_fake_data() {
   // The simulations and normalizations used to make the fake data
   static const int nFiles = 6;
-  TString simDir = "../simulations_cuore/reduced_sims/";
+  //TString simDir = "../simulations_cuore/reduced_sims/";
+  TString simDir = "/nfs/cuore1/data/simulation/CUORE/2017/ntp/";
   TString filenames [nFiles] = {"2nuFIJK-100M.root",
                                 "CuNOSV-k40.root",
                                 "CuNOSV-co60.root",
@@ -46,6 +47,8 @@ void make_fake_data() {
     newTrees[i]->SetAlias("TotalEnergy", "ESum2");
     newTrees[i]->SetAlias("PSA", "0*Ener2+1");
     newTrees[i]->SetAlias("Included", "0*Ener2+1");
+    newTrees[i]->SetAlias("Multiplicity", "Multiplicity");
+    newTrees[i]->SetAlias("MultipletIndex", "MultipletIndex");
     tempfiles[i]->Write();
     files[i]->Close();
     tempfiles[i]->Close();

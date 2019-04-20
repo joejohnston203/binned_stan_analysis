@@ -5,7 +5,7 @@
 # back2ground, MergeData-3.0.pl, PrepareData, SetLaunch-3.0.pl,
 # jags2root, MergeModel-3.0.pl, PrepareDataMult
 
-morpho_venv_activate='/home/joe/MIT_Dropbox/research/stat_code/venv_1.4.1/bin/activate'
+morpho_venv_activate='../../../../../../venv_1.4.1/bin/activate'
 fake_data_dir='shared_inputs/'
 fake_data_name='fake_data_cuore_6_sim'
 simulations_dir='../../../data/simulations_cuore/reduced_sims/combined_trees/'
@@ -19,7 +19,7 @@ while true; do
 		   -c stan_inputs/config_builder.yaml
 	    echo "Stan and Morpho config files generated. Press any key to continue."
 	    read -n 1 -s
-	    morpho -c stan_outputs/cuore_fd_analysis.yaml
+	    morpho -c stan_outputs/cuore_fd_lb_analysis.yaml
 	    echo "Finished running Stan"
 	    echo
 	    deactivate
@@ -28,6 +28,25 @@ while true; do
 	    echo "Not running Stan"
 	    echo
 	    break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+while true; do
+    read -p "Modify stan_outputs/analysis.yaml and just run morpho? " yn
+    case $yn in
+        [Yy]* )
+	    . $morpho_venv_activate
+            sed -i 's/  do_preprocessing: true/  do_preprocessing: false/' stan_outputs/cuore_fd_lb_analysis.yaml
+	        morpho -c stan_outputs/cuore_fd_lb_analysis.yaml
+		    echo "Finished running Stan"
+		        echo
+			    deactivate
+			        break;;
+        [Nn]* )
+	    echo "Not running Stan"
+	        echo
+		    break;;
         * ) echo "Please answer yes or no.";;
     esac
 done

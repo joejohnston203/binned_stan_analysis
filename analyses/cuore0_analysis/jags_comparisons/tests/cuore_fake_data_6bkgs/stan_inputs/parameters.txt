@@ -4,25 +4,25 @@ parameters:
    upper_bound: 1000.
    #prior: ""
    shapes:
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/2nuFIJK-100M.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/2nuFIJK-100M.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==0"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/2nuFIJK-100M.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/2nuFIJK-100M.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/2nuFIJK-100M.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/2nuFIJK-100M.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==2&&MultipletIndex==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/2nuFIJK-100M.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/2nuFIJK-100M.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
@@ -33,25 +33,25 @@ parameters:
    upper_bound: 1000.
    #prior: ""
    shapes:
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-k40.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-k40.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==0"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-k40.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-k40.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-k40.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-k40.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==2&&MultipletIndex==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-k40.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-k40.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
@@ -62,25 +62,25 @@ parameters:
    upper_bound: 1000.
    #prior: ""
    shapes:
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-co60.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-co60.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==0"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-co60.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-co60.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-co60.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-co60.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==2&&MultipletIndex==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSV-co60.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSV-co60.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
@@ -91,25 +91,25 @@ parameters:
    upper_bound: 1000.
    #prior: ""
    shapes:
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TopPb5cm_210Bi_cnaf136.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TopPb5cm_210Bi_cnaf136.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==0"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TopPb5cm_210Bi_cnaf136.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TopPb5cm_210Bi_cnaf136.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TopPb5cm_210Bi_cnaf136.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TopPb5cm_210Bi_cnaf136.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==2&&MultipletIndex==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TopPb5cm_210Bi_cnaf136.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TopPb5cm_210Bi_cnaf136.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
@@ -120,25 +120,25 @@ parameters:
    upper_bound: 1000.
    #prior: ""
    shapes:
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TeO2Sx-pb210-.001_cnaf14.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TeO2Sx-pb210-.001_cnaf14.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==0"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TeO2Sx-pb210-.001_cnaf14.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TeO2Sx-pb210-.001_cnaf14.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TeO2Sx-pb210-.001_cnaf14.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TeO2Sx-pb210-.001_cnaf14.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==2&&MultipletIndex==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/TeO2Sx-pb210-.001_cnaf14.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/TeO2Sx-pb210-.001_cnaf14.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
@@ -149,25 +149,25 @@ parameters:
    upper_bound: 1000.
    #prior: ""
    shapes:
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSVTowerSx-pb210-.01.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSVTowerSx-pb210-.01.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==0"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSVTowerSx-pb210-.01.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSVTowerSx-pb210-.01.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==1&&MultipletIndex==1&&Layer==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSVTowerSx-pb210-.01.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSVTowerSx-pb210-.01.root"
       renormalize: False
       format: "root values"
       tree: "outTree"
       branches: ["Ener2"]
       cut: "Included==1&&Multiplicity==2&&MultipletIndex==1"
-    - path: "../../../data/simulations_cuore/reduced_sims/combined_trees/CuNOSVTowerSx-pb210-.01.root"
+    - path: "/nfs/cuore1/data/simulation/CUORE/2017/ntp/CuNOSVTowerSx-pb210-.01.root"
       renormalize: False
       format: "root values"
       tree: "outTree"

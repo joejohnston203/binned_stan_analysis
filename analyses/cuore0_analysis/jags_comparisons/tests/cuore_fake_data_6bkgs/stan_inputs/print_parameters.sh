@@ -1,7 +1,8 @@
 #!/bin/bash
 
 outfile="parameters.txt"
-sims_path="../../../data/simulations_cuore/reduced_sims/combined_trees/"
+#sims_path="../../../data/simulations_cuore/reduced_sims/combined_trees/"
+sims_path="/nfs/cuore1/data/simulation/CUORE/2017/ntp/"
 
 echo "parameters:" > $outfile
 
