@@ -694,20 +694,24 @@ class ReconstructSpectrumProcessor:
                     nbins = 50
                     param_hist = ROOT.TH1F("param_hist", "", nbins, 1., -1.)
                     curr_counts = tree.Draw(branch+">>param_hist", cut, "goff")
+
+                    # Fit with a gaussian normalized to 1
                     def gaus_fit_fcn(x, p):
-                        arg = (x[0]-p[1])/p[2]
-                        if(x[0]>0):
-                            return p[0]*np.exp(-0.5*arg**2)/np.sqrt(2*np.pi*p[2]**2)
-                        else:
-                            return 0.
-                    gaus_fitter = ROOT.TF1("gaus_fitter", gaus_fit_fcn, -100, 100, 3)
-                    gaus_fitter.SetParameters(curr_counts/float(nbins),
-                                              p["distribution_average"],
-                                              p["distribution_sigma"])
+                        arg = (x[0]-p[0])/p[1]
+                        return np.exp(-0.5*arg**2)/np.sqrt(2*np.pi*p[1]**2)
+                    gaus_fitter = ROOT.TF1("gaus_fitter", gaus_fit_fcn, -100, 100, 2)
+                    norm = param_hist.Integral("width")
+                    for ib in range(1, nbins+1):
+                        bincontent = param_hist.GetBinContent(ib)
+                        binerror = param_hist.GetBinError(ib)
+                        param_hist.SetBinContent(ib, bincontent/norm)
+                        param_hist.SetBinError(ib, binerror/norm)
+                    gaus_fitter.SetParameter(0, param_hist.GetMean())
+                    gaus_fitter.SetParameter(1, param_hist.GetRMS())
+
                     param_hist.Fit(gaus_fitter, "Q0", "goff")
-                    gaus_norm = gaus_fitter.GetParameter(0)
-                    gaus_mean = gaus_fitter.GetParameter(1)
-                    gaus_sigma = gaus_fitter.GetParameter(2)
+                    gaus_mean = gaus_fitter.GetParameter(0)
+                    gaus_sigma = gaus_fitter.GetParameter(1)
                     if (gaus_mean-3.*gaus_sigma)>=0.:
                         gaus_fit_good = True
                     else:
@@ -767,7 +771,7 @@ class ReconstructSpectrumProcessor:
                             temp_opts_g = {"color":"red"}
                         xpts = np.linspace(lb, ub, 200)
                         def curr_gaussian(x):
-                            return gaus_fit_fcn([x], [gaus_norm, gaus_mean, gaus_sigma])
+                            return gaus_fit_fcn([x], [gaus_mean, gaus_sigma])
                         curr_gaussian = np.vectorize(curr_gaussian)
                         ypts = curr_gaussian(xpts)
                         curves.append((xpts, ypts, "default", temp_opts_g))
@@ -825,7 +829,7 @@ class ReconstructSpectrumProcessor:
                     if(frac!=0):
                         error_pct = error/frac
                     else:
-                        print("frac=0, so error_pct cannot be calculated")
+                        logger.info("frac=0, so error_pct cannot be calculated")
                         error_pct = float("inf")
                     param_fraction_file.write(
                         "%i\t%s\t%.5e\t%.5e\t%.5f\t%.5e\t%.5e\n"%
